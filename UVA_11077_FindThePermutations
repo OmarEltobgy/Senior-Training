@@ -1,0 +1,117 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+
+using namespace std;
+
+unsigned long long combination[50][50];
+unsigned long long factorial[50];
+unsigned long long dp[50][50];
+
+unsigned long long getCombinations(int N, int K)
+{
+    if(K > N/2)
+    {
+        return combination[N][K] = getCombinations(N, N-K);
+    }
+
+    if(N < K)
+    {
+        return combination[N][K] = 0;
+    }
+
+    if(K == 0)
+    {
+        return combination[N][K] = 1;
+    }
+
+    if(N == 0) // K is bigger than 0
+    {
+        return combination[N][K] = 0;
+    }
+
+    if(combination[N][K] != -1)
+    {
+        return combination[N][K];
+    }
+
+    unsigned long long leave = getCombinations(N-1, K);
+    unsigned long long take = getCombinations(N-1, K-1);
+
+    return combination[N][K] = leave+take;
+}
+
+unsigned long long getFactorial(int N)
+{
+    if(N == 0)
+    {
+        return factorial[N] = 1;
+    }
+
+    if(factorial[N] != -1)
+    {
+        return factorial[N];
+    }
+
+    return factorial[N] = N * getFactorial(N-1);
+}
+
+unsigned long long solve(int N, int K)
+{
+    unsigned long long res = 0;
+
+    if(K == 0)
+    {
+        return dp[N][K] = 1;
+    }
+
+    if(N-1 < K || N == 0) // including N == 0 and K > 0
+    {
+        return dp[N][K] = 0;
+    }
+
+    if(dp[N][K] != -1)
+    {
+        return dp[N][K];
+    }
+
+    for(int cycle=1; cycle<=K+1; cycle++)
+    {
+        unsigned long long toMultiply = getCombinations(N-1, cycle-1) * getFactorial(cycle-1);
+        res += toMultiply * solve(N-cycle, K-(cycle-1));
+    }
+
+    return dp[N][K] = res;
+}
+
+int main()
+{
+    int N, K;
+
+    memset(combination, -1, sizeof(combination));
+    memset(factorial, -1, sizeof(factorial));
+
+    scanf("%d %d",&N,&K);
+
+    while(N != 0 || K != 0)
+    {
+        memset(dp, -1, sizeof(dp));
+
+        unsigned long long res = solve(N, K);
+
+        cout << res << endl;
+
+        scanf("%d %d",&N,&K);
+    }
+
+    return 0;
+}
