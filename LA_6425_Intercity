@@ -1,0 +1,156 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <list>
+#include <algorithm>
+
+using namespace std;
+
+typedef pair<int, int> ii;
+
+int N, K, A, B;
+vector<vector<int> > adjList; // pair -> first neighbor node
+int dist[500100];
+
+long long bfs1(int source, int destination)
+{
+    queue<ii> q;
+    dist[source] = 0;
+    q.push(ii(source, 0));
+
+    while(q.empty() == false)
+    {
+        ii f = q.front();
+        int nowNode = f.first;
+        int nowDist = f.second;
+        q.pop();
+
+        if(nowNode == destination)
+        {
+            return nowDist;
+        }
+
+        for(int i=0; i<(int)adjList[nowNode].size(); i++)
+        {
+            if(dist[adjList[nowNode][i]] == -1)
+            {
+                dist[adjList[nowNode][i]] = nowDist + 1;
+                q.push(ii(adjList[nowNode][i], nowDist+1));
+            }
+        }
+    }
+    return -1; // Negative Value
+}
+
+long long bfs2(int source, int destination)
+{
+    queue<ii> q;
+    dist[source] = 0;
+    q.push(ii(source, 0));
+    list<int> unVisited;
+    for(int i=1; i<=N; i++)
+    {
+        unVisited.push_back(i);
+    }
+
+    while(q.empty() == false)
+    {
+        ii f = q.front();
+        int nowNode = f.first;
+        int nowDist = f.second;
+        q.pop();
+
+        if(nowNode == destination)
+        {
+            return nowDist;
+        }
+
+        list<int>::iterator it;
+        for(it=unVisited.begin(); it!=unVisited.end(); it++)
+        {
+            int unVisitedNode = (*it);
+            bool isNeighbour = false;
+
+            for(int v=0; v<(int)adjList[nowNode].size(); v++)
+            {
+                if(unVisitedNode == adjList[nowNode][v])
+                {
+                    isNeighbour = true;
+                }
+            }
+
+            if(isNeighbour == false)
+            {
+                unVisited.erase(it);
+                it--;
+                dist[unVisitedNode] = nowDist + 1;
+                q.push(ii(unVisitedNode, nowDist+1));
+            }
+        }
+
+
+    }
+    return -1; // Negative Value
+}
+
+int main()
+{
+    while(scanf("%d %d %d %d",&N,&K,&A,&B) != EOF) // K Edges with weight A
+    {
+        adjList.clear();
+        adjList.resize(N+1);
+
+        for(int i=1; i<=N; i++)
+        {
+            dist[i] = -1;
+        }
+
+        long long directPath = -1, res, anotherPath;
+        for(int i=0; i<K; i++)
+        {
+            int first, second;
+            scanf("%d %d",&first,&second);
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+            if((first == 1 && second == N) || (first == N && second == 1))
+            {
+                directPath = A;
+            }
+        }
+
+        if(directPath == -1)
+        {
+            directPath = B;
+        }
+
+        if(A < B)
+        {
+            anotherPath = A * bfs1(1, N); // BFS on the given graph edges
+        }
+        else
+        {
+            anotherPath = B * bfs2(1, N); // BFS on the complement graph edges
+        }
+
+        if(anotherPath > 0)
+        {
+            res = min(directPath, anotherPath);
+        }
+        else
+        {
+            res = directPath;
+        }
+
+        cout << res << endl;
+    }
+    return 0;
+}
