@@ -1,0 +1,260 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+
+using namespace std;
+
+vector<long long> coefficient;
+long long D;
+long long combination[110][110];
+
+void parse2(string str)
+{
+    //cout << str << endl;
+    string coeff = "";
+    string power = "";
+    int i = 0;
+    while(str[i] != 'n' && str[i] != '^' && i < str.length())
+    {
+        coeff += str[i];
+
+        i++;
+    }
+
+    if(i != str.length())
+    {
+        if(str[i] == 'n')
+        {
+            i++;
+        }
+        if(str[i] == '^')
+        {
+            i++;
+        }
+    }
+    while(i != str.length())
+    {
+        power += str[i];
+
+        i++;
+    }
+
+    int c, p;
+
+    if(coeff == "+" || coeff == "")
+    {
+        c = 1;
+    }
+    else if(coeff == "-")
+    {
+        c = -1;
+    }
+    else
+    {
+        c = atoi(coeff.c_str());
+    }
+
+    if(power == "" && str[str.length()-1] == 'n')
+    {
+        p = 1;
+    }
+    else if(power == "" && str[str.length()-1] != 'n')
+    {
+        p = 0;
+    }
+    else
+    {
+        p = atoi(power.c_str());
+    }
+
+    coefficient[p] += c;
+
+    //cout << coeff << " " << power << endl;
+    //cout << c << " " << p << endl;
+}
+
+void parse(string str)
+{
+    string term = "";
+    int i = 1; // the first one if '('
+    while(str[i] != ')')
+    {
+        if((str[i] == '+' || str[i] == '-') && (term != ""))
+        {
+            parse2(term);
+
+            term = "";
+        }
+
+        term += str[i];
+
+        i++;
+    }
+    if(term != "")
+    {
+        parse2(term);
+    }
+
+    i++; // for the ')'
+    i++; // for the '/'
+    string numberStr = "";
+
+    while(i != str.length())
+    {
+        numberStr += str[i];
+        i++;
+    }
+
+    D = atoi(numberStr.c_str());
+    //cout << D << endl;
+}
+
+long long getCombinations(int N, int K)
+{
+    if(K > N/2)
+    {
+        return combination[N][K] = getCombinations(N, N-K)%D;
+    }
+
+    if(N < K)
+    {
+        return combination[N][K] = 0;
+    }
+
+    if(K == 0)
+    {
+        return combination[N][K] = 1;
+    }
+
+    if(N == 0) // K is bigger than 0
+    {
+        return combination[N][K] = 0;
+    }
+
+    if(combination[N][K] != -1)
+    {
+        return combination[N][K];
+    }
+
+    long long leave = getCombinations(N-1, K);
+    long long take = getCombinations(N-1, K-1);
+
+    return combination[N][K] = (leave%D + take%D) % D;
+}
+
+bool solve(vector<long long> coeff)
+{
+    //cout << "================================" << endl;
+
+    // Before Each Call you should try substituting with 1 and checking if the base case holds
+    long long baseCase = 0;
+    for(int i=0; i<110; i++)
+    {
+        baseCase = (baseCase%D + coeff[i]%D) % D;
+    }
+    if(baseCase % D != 0)
+    {
+        return false;
+    }
+
+    vector<long long> newCoeff;
+    newCoeff.resize(110, 0);
+    bool endd = true;
+
+    newCoeff[0] = coeff[0];
+    // the coefficient of power 0 will not change be substituting with (n+1)
+    for(int power=1; power<110; power++)
+    {
+        long long thisPowerCoeff = coeff[power];
+        if(thisPowerCoeff != 0)
+        {
+            endd = false;
+            // if there is a coefficient to n power any value other than 0
+
+            for(int newPower=power; newPower>=0; newPower--)
+            {
+                int k = power - newPower;
+                long long newC = (thisPowerCoeff%D * getCombinations(power, k)%D) % D;
+                newCoeff[newPower] = (newCoeff[newPower]%D + newC%D) % D;
+            }
+        }
+    }
+
+    if(endd == true)
+    {
+        if(newCoeff[0] % D == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    for(int power=0; power<110; power++)
+    {
+        if(newCoeff[power] == 0 && coeff[power] == 0)
+        {
+            continue;
+        }
+        //cout << power << " " << newCoeff[power] << "-" << coeff[power] << " -> " ;
+        newCoeff[power] = (newCoeff[power]%D - coeff[power]%D + D) % D;
+        //cout << newCoeff[power] << endl;
+    }
+
+    return solve(newCoeff);
+}
+
+int main()
+{
+    string input;
+    int testN = 1;
+    getline(cin, input);
+    while(input[0] != '.')
+    {
+        coefficient.clear();
+        coefficient.resize(110, 0);
+        memset(combination, -1, sizeof(combination));
+
+        parse(input);
+
+        bool res;
+
+        for(int i=0; i<110; i++)
+        {
+            coefficient[i] = coefficient[i] % D;
+            // you should make all the coefficients positive
+            // because afterwards they will be added to another values and take the mod to them
+            // and we want always the result of the mod to be positive
+            while(coefficient[i] < 0)
+            {
+                coefficient[i] += D;
+            }
+        }
+
+        res = solve(coefficient);
+
+        if(res == true)
+        {
+            printf("Case %d: Always an integer\n", testN);
+        }
+        else
+        {
+            printf("Case %d: Not always an integer\n", testN);
+        }
+
+        getline(cin, input);
+        testN++;
+    }
+    return 0;
+}
