@@ -1,0 +1,125 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+typedef pair<ll, pll> plll;
+
+ll N, C1, C2, N1, N2, X, Y;
+
+plll extEcluid(ll a, ll b)
+{
+    ll gcd, x, y, _x, _y;
+
+    if(b == 0)
+    {
+        gcd = a;
+        x = 1;
+        y = 0;
+
+        return plll(gcd, pll(x, y));
+    }
+    plll ret = extEcluid(b, a%b);
+
+    gcd = ret.first;
+    _x = ret.second.first;
+    _y = ret.second.second;
+
+    x = _y;
+    y = _x - (a/b) * _y;
+
+    return plll(gcd, pll(x, y));
+}
+
+int main()
+{
+    scanf("%lld",&N);
+    while(N != 0)
+    {
+        scanf("%lld %lld %lld %lld",&C1,&N1,&C2,&N2);
+
+        plll ret = extEcluid(N1, N2);
+
+        ll a = N1;
+        ll b = N2;
+        ll gcd = ret.first;
+        ll x = ret.second.first;
+        ll y = ret.second.second;
+
+        //printf("%lld %lld %lld\n", gcd, x, y);
+
+        if(N % gcd != 0)
+        {
+            printf("failed\n");
+
+            scanf("%lld",&N); // Don't forget this :)
+            continue;
+        }
+
+        ll times = N / gcd;
+        x = x * times;
+        y = y * times;
+
+        ll number_1, number_2, newX_1, newY_1, newX_2, newY_2, cost_1, cost_2;
+
+        number_1 = floor((double)x * gcd / b); // Note that you must cast to double
+        newX_1 = x - ((b / gcd) * number_1);
+        newY_1 = y + ((a / gcd) * number_1);
+        if(newX_1>=0 && newX_1<=N && newY_1>=0 && newY_1<=N)
+        {
+            cost_1 = newX_1 * C1 + newY_1 * C2;
+        }
+        else
+        {
+            cost_1 = -1; //:(
+        }
+
+        number_2 = floor((double)y * gcd / a);
+        newY_2 = y - ((a / gcd) * number_2);
+        newX_2 = x + ((b / gcd) * number_2);
+        if(newX_2>=0 && newX_2<=N && newY_2>=0 && newY_2<=N)
+        {
+            cost_2 = newX_2 * C1 + newY_2 * C2;
+        }
+        else
+        {
+            cost_2 = -1; //:(
+        }
+
+        if(cost_1 == -1 && cost_2 == -1)
+        {
+            printf("failed\n");
+        }
+        else if(cost_2 == -1)
+        {
+            printf("%lld %lld\n", newX_1, newY_1);
+        }
+        else if(cost_1 == -1)
+        {
+            printf("%lld %lld\n", newX_2, newY_2);
+        }
+        else if(cost_1 < cost_2)
+        {
+            printf("%lld %lld\n", newX_1, newY_1);
+        }
+        else // cost_2 >= cost_1
+        {
+            printf("%lld %lld\n", newX_2, newY_2);
+        }
+
+        scanf("%lld",&N);
+    }
+    return 0;
+}
