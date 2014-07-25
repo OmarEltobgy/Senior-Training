@@ -1,0 +1,138 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+typedef pair<ll, pll> plll;
+
+int N;
+ll numbers[1000], B, M;
+ll result[1000];
+bool yes;
+
+plll extEcluid(ll a, ll b)
+{
+    ll gcd, x, y, _x, _y;
+
+    if(b == 0)
+    {
+        gcd = a;
+        x = 1;
+        y = 0;
+
+        return plll(gcd, pll(x, y));
+    }
+    plll ret = extEcluid(b, a%b);
+
+    gcd = ret.first;
+    _x = ret.second.first;
+    _y = ret.second.second;
+
+    x = _y;
+    y = _x - (a/b) * _y;
+
+    return plll(gcd, pll(x, y));
+}
+
+ll solve(ll firstTermValue, int secondTermIndex)
+{
+    ll gcd, x, y, times;
+    ll a, b, toMul;
+    plll returned;
+
+    if(secondTermIndex == N)
+    {
+        a = firstTermValue;
+        b = M;
+
+        returned = extEcluid(a, b);
+
+        gcd = returned.first;
+        x = returned.second.first;
+        y = returned.second.second;
+
+        if(B % gcd != 0)
+        {
+            yes = false;
+
+            return -1; // any value
+        }
+        else
+        {
+            times = B / gcd;
+            x = x * times;
+            y = y * times;
+
+            return (x % M + M) % M;
+        }
+    }
+
+    a = firstTermValue;
+    b = numbers[secondTermIndex];
+    returned = extEcluid(a, b);
+
+    gcd = returned.first;
+    x = returned.second.first;
+    y = returned.second.second;
+
+    toMul = solve(gcd, secondTermIndex+1);
+
+    y = y * toMul;
+    x = x * toMul;
+
+    result[secondTermIndex] = (y % M + M) % M;
+
+    return (x % M + M) % M;
+}
+
+int main()
+{
+    int testN;
+    scanf("%d",&testN);
+    while(testN--)
+    {
+        scanf("%d",&N);
+        for(int i=0; i<N; i++)
+        {
+            scanf("%lld",&numbers[i]);
+        }
+        scanf("%lld %lld",&B,&M);
+
+        yes = true;
+        ll toMul = solve(numbers[0], 1); // 2nd Term (0 -> 1)
+        result[0] = toMul;
+
+        if(yes == false)
+        {
+            printf("NO\n");
+        }
+        else
+        {
+            for(int i=0; i<N; i++)
+            {
+                printf("%lld", result[i]);
+                if(i != N-1)
+                {
+                    printf(" ");
+                }
+            }
+            printf("\n");
+        }
+    }
+    return 0;
+}
+
+
+
