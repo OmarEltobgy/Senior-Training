@@ -1,0 +1,449 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+
+using namespace std;
+
+typedef pair<int, int> ii;
+
+int N;
+ii old[1030][1030];
+int keys[35];
+bool visited[1030][1030];
+int cycleN=1;
+map<string, int> keyMap;
+int keysN;
+
+void solve(int what)
+{
+    int i, j;
+    int oldI, oldJ;
+    ii num;
+    if(what == 0 || what == 1) // id, id-
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                oldI = i;
+                oldJ = j;
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+    else if(what == 2) // rot
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                oldI = j;
+                oldJ = N-1-i;
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+    else if(what == 3) // rot-
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                oldI = N-1-j;
+                oldJ = i;
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+    else if(what == 4 || what == 5) // sym, sym-
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                oldI = i;
+                oldJ = N-1-j;
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+    else if(what == 6 || what == 7) // bhsym, bhsym-
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                if(i >= N/2)
+                {
+                    oldI = i;
+                    oldJ = N-1-j;
+                }
+                else
+                {
+                    oldI = i;
+                    oldJ = j;
+                }
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+    // This is tricky as unlike bhsym we need to add another N/2 to the (oldI) because we change int the rows
+    // while we are in the lower part so N-1 become N/2 instead of 0
+    else if(what == 8 || what == 9) // bvsym, bvsym-
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                if(i >= N/2)
+                {
+                    oldI = N-1-i + N/2;
+                    oldJ = j;
+                }
+                else
+                {
+                    oldI = i;
+                    oldJ = j;
+                }
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+    // Note that we make an edge from the new to the old
+    // the new rows are (0, 1, 2, ... n/2 - 1) and the old rows are (0, 2, .... n-2)
+    // the new rows are (n/2, n/2+1, .... n-1) and the old rows are (1, 3, .... n-1)
+    // Note that here we divide the rows to i<N/2 and i>=N/2
+    else if(what == 10) // div
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                if(i < N/2)
+                {
+                    oldI = 2*i;
+                    oldJ = j;
+                }
+                else
+                {
+                    oldI = 2*i - N + 1;
+                    oldJ = j;
+                }
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+    // The Opposite of the above the new is the old and the old is the new
+    // Note that here we divide the rows to even rows and odd rows
+    else if(what == 11) // div-
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                if(i%2 == 0)
+                {
+                    oldI = i/2;
+                    oldJ = j;
+                }
+                else
+                {
+                    oldI = N/2 + (i-1)/2;
+                    oldJ = j;
+                }
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+    // Simulation to exactly what is described in the problem statement
+    // Note that here we divide the columns to even columns and odd columns
+    else if(what == 12) // mix
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                if(i%2 == 0)
+                {
+                    if(j%2 == 0)
+                    {
+                        oldI = i;
+                        oldJ = j/2;
+                    }
+                    else
+                    {
+                        oldI = i+1;
+                        oldJ = (j-1)/2;
+                    }
+                }
+                else
+                {
+                    if(j%2 == 0)
+                    {
+                        oldI = i-1;
+                        oldJ = j/2 + N/2;
+                    }
+                    else
+                    {
+                        oldI = i;
+                        oldJ = (j-1)/2 + N/2;
+                    }
+                }
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+    
+    // Note that you must list the opposite cases and deduce a formula to the opposite
+    // Note that here we divide the columns to i<N/2 and i>=N/2
+    else if(what == 13) // mix-
+    {
+        for(int f=0; f<N; f++)
+        {
+            for(int s=0; s<N; s++)
+            {
+                num = old[f][s];
+                i = num.first;
+                j = num.second;
+
+                if(i%2 == 0)
+                {
+                    if(j < N/2)
+                    {
+                        oldI = i;
+                        oldJ = 2*j;
+                    }
+                    else
+                    {
+                        oldI = i+1;
+                        oldJ = (j - N/2) * 2;
+                    }
+                }
+                else
+                {
+                    if(j < N/2)
+                    {
+                        oldI = i-1;
+                        oldJ = 2*j + 1;
+                    }
+                    else
+                    {
+                        oldI = i;
+                        oldJ = (j - N/2) * 2 + 1;
+                    }
+                }
+
+                old[f][s] = ii(oldI, oldJ);
+            }
+        }
+    }
+}
+
+void bfs(int i, int j)
+{
+    cycleN = 0;
+    visited[i][j] = true;
+
+    int nowI = i;
+    int nowJ = j;
+    int oldI, oldJ;
+
+    while(true)
+    {
+        cycleN ++;
+        ii oldPair = old[nowI][nowJ];
+        oldI = oldPair.first;
+        oldJ = oldPair.second;
+
+        if(visited[oldI][oldJ] == false)
+        {
+            visited[oldI][oldJ] = true;
+            nowI = oldI;
+            nowJ = oldJ;
+        }
+        else
+        {
+            return;
+        }
+    }
+}
+
+int GCD(int a, int b)
+{
+    if(b == 0)
+    {
+        return a;
+    }
+
+    return GCD(b, a%b);
+}
+
+int LCM(int a, int b)
+{
+    return ((a / GCD(a, b)) * b);
+}
+
+void parse(string str)
+{
+    int index = 0;
+    string tempStr;
+    keysN = 0;
+
+    while(index != (int)str.length())
+    {
+        tempStr = "";
+
+        while(index != (int)str.length() && str[index] != ' ')
+        {
+            tempStr += str[index];
+            index ++;
+        }
+
+        keys[keysN] = keyMap[tempStr];
+        keysN++;
+
+        while(index != (int)str.length() && str[index] == ' ')
+        {
+            index ++;
+        }
+    }
+}
+
+int main()
+{
+    keyMap["id"] = 0;
+    keyMap["id-"] = 1;
+    keyMap["rot"] = 2;
+    keyMap["rot-"] = 3;
+    keyMap["sym"] = 4;
+    keyMap["sym-"] = 5;
+    keyMap["bhsym"] = 6;
+    keyMap["bhsym-"] = 7;
+    keyMap["bvsym"] = 8;
+    keyMap["bvsym-"] = 9;
+    keyMap["div"] = 10;
+    keyMap["div-"] = 11;
+    keyMap["mix"] = 12;
+    keyMap["mix-"] = 13;
+
+    int testN;
+    scanf("%d",&testN);
+    for(int tt=0; tt<testN; tt++)
+    {
+        scanf("%d",&N);
+
+        //memset(visited, false, sizeof(visited));
+        for(int i=0; i<N; i++)
+        {
+            for(int j=0; j<N; j++)
+            {
+                old[i][j] = ii(i, j);
+                visited[i][j] = false;
+            }
+        }
+
+        string str;
+        getline(cin, str); // for the \n
+        getline(cin, str);
+        parse(str);
+
+        /*cout << keys.size() << endl;
+        for(int i=0; i<keys.size(); i++)
+        {
+            cout << keys[i] << endl;
+        }*/
+
+        /*
+        1) We don't make two for loops for N and for each cell we find the older cell because each time we will
+           check all the conditions to find which key to perform so of course it is better to make this check one time
+           and inside the condition we make this 2 nested for loops
+        2) We make a map for each key and a number to it
+        3) We should take the effect of the last one first then take the effect of the one before it and so on
+           but here we begin from the first one as we make an edge between each cell and the older cell which
+           is the cell that causes this cell to be found
+        */
+        for(int k=0; k<keysN; k++)
+        {
+            solve(keys[k]);
+        }
+
+
+        int res = 1;
+        for(int i=0; i<N; i++)
+        {
+            for(int j=0; j<N; j++)
+            {
+                if(visited[i][j] == false)
+                {
+                    // Modified BFS as each node has only one neighbor also it consists of only cycles
+                    // so it starts from a node till it gets back to it and count the number of nodes in this cycle
+                    bfs(i, j);
+                    //cout << cycleN << endl;
+                    res = LCM(res, cycleN);
+                }
+            }
+        }
+
+        printf("%d\n", res);
+
+        if(tt != testN-1)
+        {
+            printf("\n");
+        }
+    }
+    return 0;
+}
