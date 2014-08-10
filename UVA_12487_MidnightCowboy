@@ -1,0 +1,151 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+int N, start, inExp, expp;
+vector<vector<int> > adjList;
+vector<vector<double> > augMat;
+vector<double> result;
+
+bool swapPivot(int rowN)
+{
+    double temp;
+    for(int i=rowN+1; i<=N; i++) // N -> number of rows
+    {
+        if(augMat[i][rowN] != 0)
+        {
+            for(int j=rowN; j<=N+1; j++) // N+1 -> number of columns
+            {
+                temp = augMat[rowN][j];
+                augMat[i][j] = temp;
+                augMat[rowN][j] = augMat[i][j];
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+void gauss_Elimination()
+{
+    int dependentN = 0;
+
+    // Forward Substitution
+    for(int i=1; i<=N; i++) // N -> number of rows
+    {
+        if(augMat[i][i] == 0)
+        {
+            if(swapPivot(i) == false)
+            {
+                dependentN ++;
+                continue;
+            }
+        }
+
+        for(int j=i+1; j<=N; j++) // N -> number of rows
+        {
+            double pivot = augMat[j][i] / augMat[i][i];
+
+            for(int k=i; k<=N+1; k++) // N+1 -> number of columns
+            {
+                augMat[j][k] -= pivot*augMat[i][k];
+            }
+        }
+    }
+
+    // Backward Substitution
+    for(int i=N; i>=1; i--) // N -> number of rows
+    {
+        result[i] = augMat[i][N+1];
+
+        for(int j=N; j>i; j--) // N -> number of columns without last one
+        {
+            result[i] -= result[j]*augMat[i][j];
+        }
+
+        result[i] /= augMat[i][i];
+    }
+}
+
+int main()
+{
+    while(scanf("%d %d %d %d",&N,&start,&inExp,&expp) != EOF)
+    {
+        adjList.clear();
+        adjList.resize(N+1);
+        for(int i=0; i<N-1; i++)
+        {
+            int f, s;
+            scanf("%d %d",&f,&s);
+            adjList[f].push_back(s);
+            adjList[s].push_back(f);
+        }
+
+        augMat.clear();
+        augMat.resize(N+1);
+        result.resize(N+1);
+        for(int i=1; i<=N; i++)
+        {
+            augMat[i].resize(N+2);
+            result[i] = 0;
+            for(int j=1; j<=N+1; j++)
+            {
+                augMat[i][j] = 0;
+            }
+
+            augMat[i][i] = 1;
+
+            double fraction = 1.0 / (double)adjList[i].size();
+            for(int j=0; j<(int)adjList[i].size(); j++)
+            {
+                int neighbour = adjList[i][j];
+                augMat[i][neighbour] = -1 * fraction;
+            }
+        }
+
+        //setting P(inExp) = 1
+        for(int j=1; j<=N; j++)
+        {
+            if(j != inExp)
+            {
+                augMat[inExp][j] = 0;
+            }
+            else
+            {
+                augMat[inExp][inExp] = 1;
+            }
+        }
+        augMat[inExp][N+1] = 1;
+
+        //setting P(expp) = 0
+        for(int j=1; j<=N; j++)
+        {
+            if(j != expp)
+            {
+                augMat[expp][j] = 0;
+            }
+            else
+            {
+                augMat[expp][expp] = 1;
+            }
+        }
+        augMat[expp][N+1] = 0;
+
+        gauss_Elimination();
+
+        printf("%.6lf\n", result[start]);
+    }
+    return 0;
+}
