@@ -1,0 +1,147 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+int start1, start2, dice, damage;
+vector<vector<double> > augMat;
+vector<double> result;
+int N;
+
+bool swapPivot(int rowN)
+{
+    double temp;
+    for(int i=rowN+1; i<=N; i++) // N -> number of rows
+    {
+        if(augMat[i][rowN] != 0)
+        {
+            for(int j=rowN; j<=N+1; j++) // N+1 -> number of columns
+            {
+                temp = augMat[rowN][j];
+                augMat[i][j] = temp;
+                augMat[rowN][j] = augMat[i][j];
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+void gauss_Elimination()
+{
+    int dependentN = 0;
+
+    // Forward Substitution
+    for(int i=0; i<=N; i++) // N -> number of rows
+    {
+        if(augMat[i][i] == 0)
+        {
+            if(swapPivot(i) == false)
+            {
+                dependentN ++;
+                continue;
+            }
+        }
+
+        for(int j=i+1; j<=N; j++) // N -> number of rows
+        {
+            double pivot = augMat[j][i] / augMat[i][i];
+
+            for(int k=i; k<=N+1; k++) // N+1 -> number of columns
+            {
+                augMat[j][k] -= pivot*augMat[i][k];
+            }
+        }
+    }
+
+    // Backward Substitution
+    for(int i=N; i>=0; i--) // N -> number of rows
+    {
+        result[i] = augMat[i][N+1];
+
+        for(int j=N; j>i; j--) // N -> number of columns without last one
+        {
+            result[i] -= result[j]*augMat[i][j];
+        }
+
+        result[i] /= augMat[i][i];
+    }
+}
+
+int main()
+{
+    scanf("%d %d %d %d",&start1,&start2,&dice,&damage);
+
+    while(start1!=0 || start2!=0 || dice!=0 || damage!=0)
+    {
+        N = start1 + start2;
+        augMat.clear();
+        augMat.resize(N+1);
+
+        double win = (double)dice/6.0;
+        double lose = (double)(6-dice)/6.0;
+        for(int i=0; i<=N; i++)
+        {
+            augMat[i].resize(N+2);
+
+            for(int j=0; j<=N+1; j++)
+            {
+                augMat[i][j] = 0;
+            }
+
+            augMat[i][i] = 1;
+
+            int winNext = i + damage;
+            if(winNext > N)
+            {
+                winNext = N;
+            }
+            augMat[i][winNext] = -1*win;
+
+            int loseNext = i - damage;
+            if(loseNext < 0)
+            {
+                loseNext = 0;
+            }
+            augMat[i][loseNext] = -1*lose;
+        }
+
+        // Making 0 with probability 0
+        for(int j=0; j<=N+1; j++)
+        {
+            augMat[0][j] = 0;
+        }
+        augMat[0][0] = 1;
+        augMat[0][N+1] = 0;
+
+        // Making N=start1+start2 with probability 1
+        for(int j=0; j<=N+1; j++)
+        {
+            augMat[N][j] = 0;
+        }
+        augMat[N][N] = 1;
+        augMat[N][N+1] = 1;
+
+        result.clear();
+        result.resize(N+1);
+
+        gauss_Elimination();
+
+        double toPrint = result[start1] * 100.0;
+        printf("%.1lf\n", toPrint);
+
+        scanf("%d %d %d %d",&start1,&start2,&dice,&damage);
+    }
+    return 0;
+}
