@@ -29,8 +29,9 @@ bool swapPivot(int rowN)
             for(int j=rowN; j<=N+1; j++) // N+1 -> number of columns
             {
                 temp = augMat[rowN][j];
-                augMat[i][j] = temp;
                 augMat[rowN][j] = augMat[i][j];
+                augMat[i][j] = temp;
+                
             }
             return true;
         }
