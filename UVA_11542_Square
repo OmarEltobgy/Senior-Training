@@ -1,0 +1,157 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+vector<vector<int> > augMat;
+int rowN, colN, primesN;
+vector<int> primes;
+bool isPrime[1010];
+long long inDependentN = 0;
+
+bool swapPivot(int rr, int columnIncrement)
+{
+    int temp;
+    for(int i=rr+1; i<=rowN; i++) // N -> number of rows
+    {
+        if(augMat[i][rr+columnIncrement] != 0)
+        {
+            for(int j=rr+columnIncrement; j<=colN; j++) // N+1 -> number of columns
+            {
+                temp = augMat[rr][j];
+                augMat[rr][j] = augMat[i][j];
+                augMat[i][j] = temp;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+void gauss_Elimination()
+{
+    inDependentN = 0;
+    int columnIncrement = 0; // this is also the number of dependent equations
+
+    // Forward Substitution
+    for(int i=1; i<=rowN; i++) // N -> number of rows
+    {
+        if(i+columnIncrement > colN-1) // -1 because we don't need the augmented matrix column
+        {
+            break; // the end no more independent equations to explore
+        }
+
+        if(augMat[i][i+columnIncrement] == 0)
+        {
+            if(swapPivot(i, columnIncrement) == false)
+            {
+                columnIncrement ++;
+                i--;
+                continue;
+            }
+        }
+
+        inDependentN++;
+
+        for(int j=i+1; j<=rowN; j++) // N -> number of rows
+        {
+            int pivot = augMat[j][i+columnIncrement] / augMat[i][i+columnIncrement]; // we don't need to make modular multiplicative inverse as augMat[i][i] must = 1
+
+            for(int k=i+columnIncrement; k<=colN; k++) // N+1 -> number of columns
+            {
+                augMat[j][k] = (augMat[j][k] - (pivot*augMat[i][k])%2) % 2;
+            }
+        }
+    }
+}
+
+int main()
+{
+    int i;
+    primesN = 0;
+
+    for(i=0; i<510; i++)
+    {
+        isPrime[i] = true;
+    }
+
+    isPrime[0] = false;
+    isPrime[1] = false;
+
+    for(i=2; i*i<=510; i++)
+    {
+        if(isPrime[i] == true)
+        {
+            primes.push_back(i);
+            primesN ++;
+            for(int j=i*i; j<=510; j+=i)
+            {
+                isPrime[j] = false;
+            }
+        }
+    }
+
+    for(i=i; i<=510; i++)
+    {
+        if(isPrime[i] == true)
+        {
+            primes.push_back(i);
+            primesN ++;
+        }
+    }
+
+    int testN, n;
+    long long numbers[110];
+    scanf("%d",&testN);
+    while(testN--)
+    {
+        scanf("%d",&n);
+        for(i=0; i<n; i++)
+        {
+            scanf("%lld",&numbers[i]);
+        }
+
+        colN = n+1;
+        rowN = primes.size();
+
+        augMat.clear();
+        augMat.resize(rowN+1);
+        for(i=1; i<=rowN; i++) // loops on the prime index
+        {
+            augMat[i].resize(colN+1);
+            for(int j=1; j<=n; j++) // loops on input numbers
+            {
+                augMat[i][j] = 0;
+                while(numbers[j-1] != 0 && numbers[j-1] % primes[i-1] == 0)
+                {
+                    numbers[j-1] /= primes[i-1];
+                    augMat[i][j] = (augMat[i][j] + 1) % 2;
+                }
+                //cout << augMat[i][j] << " ";
+            }
+
+            augMat[i][colN] = 0; //must be even number - the augmented matrix
+            //cout << "       " << augMat[i][colN] << endl;
+        }
+
+        inDependentN = 0;
+        gauss_Elimination();
+
+        long long dependentN = n-inDependentN;
+
+        long long res = pow(2, dependentN);
+        printf("%lld\n", res-1);
+    }
+    return 0;
+}
