@@ -1,0 +1,70 @@
+    #include <iostream>
+    #include <stdio.h>
+    #include <vector>
+    #include <queue>
+    #include <string>
+    #include <string.h>
+    #include <stdlib.h>
+    #include <map>
+    #include <functional>
+    #include <stack>
+    #include <math.h>
+    #include <iterator>
+    #include <algorithm>
+
+    using namespace std;
+
+    int N, M, testN;
+    long long dp[15][110][110];
+
+    long long solve(int number, int mini, int maxi)
+    {
+        int tempN = maxi-mini+1;
+        long long result = 1000000000;
+        long long exp = -1, noExp = -1;
+
+        if(number == 1)
+        {
+            long long toRet = ((long long)tempN*(long long)(maxi+mini)) / 2;
+            return toRet;
+        }
+
+        if(mini == maxi)
+        {
+            return mini;
+        }
+
+        if(dp[number][mini][maxi] != -1)
+        {
+            return dp[number][mini][maxi];
+        }
+
+        int mid1 = (mini+maxi)/2;
+        int mid2 = (mini+maxi+1)/2;
+
+        for(int toTry = mini+1; toTry <= maxi-1; toTry++)
+        {
+            exp = toTry + solve(number-1, mini, toTry-1);
+            noExp = toTry + solve(number, toTry+1, maxi);
+
+            result = min(result, max(exp, noExp));
+        }
+
+        return dp[number][mini][maxi] = result;
+    }
+
+    int main()
+    {
+        scanf("%d",&testN);
+
+        while(testN--)
+        {
+            scanf("%d %d",&N,&M);
+
+            memset(dp, -1, sizeof(dp));
+
+            cout << solve(N, 1, M) << endl;
+        }
+
+        return 0;
+    }
