@@ -1,0 +1,111 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+#include <time.h>
+
+using namespace std;
+
+typedef vector<long long> vi;
+typedef vector<vi> vvi;
+
+vvi matrix;
+int mod = 1000000007;
+
+vvi marixtMultiply(vvi first, vvi second)
+{
+    vvi result;
+
+    int x = first.size();
+    int middle = first[0].size();
+    int y = second[0].size();
+
+    result.resize(x);
+    for(int i=0; i<x; i++)
+    {
+        result[i].resize(y);
+        for(int j=0; j<y; j++)
+        {
+            result[i][j] = 0;
+            for(int k=0; k<middle; k++)
+            {
+                result[i][j] = (result[i][j]%mod + (first[i][k]%mod * second[k][j]%mod) % mod) % mod;
+            }
+        }
+    }
+
+    return result;
+}
+
+vvi matrixPower(int power)
+{
+    if(power == 0)
+    {
+        vvi result;
+        result.resize(matrix.size());
+        for(int i=0; i<(int)result.size(); i++)
+        {
+            result[i].resize(result.size());
+            for(int j=0; j<(int)result.size(); j++)
+            {
+                if(i == j)
+                {
+                    result[i][j] = 1;
+                }
+                else
+                {
+                    result[i][j] = 0;
+                }
+            }
+        }
+        return result;
+    }
+
+    vvi result = matrixPower(power/2);
+    result = marixtMultiply(result, result);
+    if(power % 2 != 0)
+    {
+        result = marixtMultiply(result, matrix);
+    }
+
+    return result;
+}
+
+int main()
+{
+    int N;
+
+    matrix.resize(4);
+    for(int i=0; i<4; i++)
+    {
+        matrix[i].resize(4);
+        for(int j=0; j<4; j++)
+        {
+            if(i == j)
+            {
+                matrix[i][j] = 0;
+            }
+            else
+            {
+                matrix[i][j] = 1;
+            }
+        }
+    }
+
+    scanf("%d",&N);
+
+    vvi result = matrixPower(N);
+
+    cout << result[0][0] << endl;
+
+    return 0;
+}
