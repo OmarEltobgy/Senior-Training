@@ -1,0 +1,57 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <time.h>
+#include <algorithm>
+
+using namespace std;
+
+vector<int> canWin;
+int maxx = 1000000100;
+
+int main()
+{
+    int nowNumber = 1;
+    while(nowNumber < maxx)
+    {
+        nowNumber *= 2;
+        canWin.push_back(nowNumber-1);
+    }
+
+    int N;
+    scanf("%d",&N);
+    while(N != 0)
+    {
+        bool found = false;
+
+        for(int i=0; i<canWin.size(); i++)
+        {
+            if(N == canWin[i])
+            {
+                found = true;
+            }
+        }
+
+        if(found == false)
+        {
+            printf("Alice\n");
+        }
+        else
+        {
+            printf("Bob\n");
+        }
+
+        scanf("%d",&N);
+    }
+
+    return 0;
+}
