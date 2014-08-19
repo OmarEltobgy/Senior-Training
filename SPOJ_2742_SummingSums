@@ -1,0 +1,104 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+#include <time.h>
+
+using namespace std;
+
+typedef vector<long long> vi;
+typedef vector<vi> vvi;
+typedef pair<long long, long long> pll;
+
+pll XY;
+long long N;
+long long mod = 98765431;
+
+pll matrixPower(long long power)
+{
+    pll result;
+    if(power == 0)
+    {
+        result = pll(1, 0);
+        return result;
+    }
+
+    result = matrixPower(power/2);
+
+    //squaring
+    long long X, Y, newX, newY;
+    X = result.first % mod;
+    Y = result.second % mod;
+
+    newX = ( (X*X)%mod + (((N-1)*((Y*Y)%mod))%mod) ) % mod; //newX = X*X+(N-1)*(Y*Y)
+    newY = ( (2*((X*Y)%mod))%mod + ((N-2)*((Y*Y)%mod))%mod ) % mod; //newY = 2*(X*Y)+(N-2)*(Y*Y)
+
+    result.first = newX % mod;
+    result.second = newY % mod;
+
+    if(power % 2 != 0)
+    {
+        //multiplying
+        X = result.first % mod;
+        Y = result.second % mod;
+
+        newX = ((N-1)*Y) % mod; // newX = (N-1)*Y
+        newY = (((N-2)*Y)%mod + X) % mod; // newY = (N-2)*Y+X
+
+        result.first = newX % mod;
+        result.second = newY % mod;
+    }
+
+    return result;
+}
+
+int main()
+{
+    long long P;
+    scanf("%lld %lld",&N,&P);
+
+    pll XY = matrixPower(P);
+
+    long long X = XY.first % mod;
+    long long Y = XY.second % mod;
+
+    vvi toMultiply;
+    toMultiply.resize(N);
+    for(int i=0; i<N; i++)
+    {
+        toMultiply[i].resize(1);
+        scanf("%lld",&toMultiply[i][0]);
+        toMultiply[i][0] = toMultiply[i][0] % mod;
+    }
+
+    vvi toPrint;
+    toPrint.resize(N);
+
+    long long sum = 0;
+
+    for(int i=0; i<N; i++)
+    {
+        sum = ( sum%mod + ((toMultiply[i][0]*Y)%mod) ) % mod;
+    }
+
+    for(int i=0; i<N; i++)
+    {
+        toPrint[i].resize(1);
+        toPrint[i][0] = sum;
+        toPrint[i][0] = ((toPrint[i][0]%mod - (toMultiply[i][0]*Y)%mod)%mod + mod) % mod;
+        toPrint[i][0] = (toPrint[i][0]%mod + (toMultiply[i][0]*X)%mod) % mod;
+
+        printf("%lld\n",toPrint[i][0]);
+    }
+
+    return 0;
+}
