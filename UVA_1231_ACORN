@@ -1,0 +1,72 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+#include <time.h>
+
+using namespace std;
+
+int treesN, treeHeight, decrease;
+long long dp[2010][2010];
+long long maximum[2010];
+int acrons[2010][2010];
+
+int main()
+{
+    int testN;
+    scanf("%d",&testN);
+    while(testN--)
+    {
+        scanf("%d %d %d",&treesN,&treeHeight,&decrease);
+
+        memset(acrons, 0, sizeof(acrons));
+
+        for(int i=0; i<treesN; i++)
+        {
+            int num, temp;
+            scanf("%d",&num);
+            for(int j=0; j<num; j++)
+            {
+                scanf("%d",&temp);
+                acrons[i][temp] ++;
+            }
+        }
+
+        memset(dp, -1, sizeof(dp));
+        memset(maximum, -1, sizeof(maximum));
+
+        for(int height=0; height<=treeHeight; height++)
+        {
+            for(int tree=0; tree<treesN; tree++)
+            {
+                dp[height][tree] = acrons[tree][height];
+
+                if(height-decrease >= 0)
+                {
+                    dp[height][tree] = max(dp[height][tree], acrons[tree][height]+maximum[height-decrease]);
+                }
+
+                if(height-1 >= 0)
+                {
+                    dp[height][tree] = max(dp[height][tree], acrons[tree][height]+dp[height-1][tree]);
+                }
+
+                maximum[height] = max(maximum[height], dp[height][tree]);
+            }
+        }
+
+        cout << maximum[treeHeight] << endl;
+    }
+
+    scanf("%d",&testN);
+    return 0;
+}
