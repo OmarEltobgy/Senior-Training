@@ -1,0 +1,231 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+vector<vector<int> > adjList;
+int adjMat[200][200];
+int original[200][200];
+int maximum;
+int sourceNode, endNode;
+int parent[200];
+bool visited[200];
+int INF = 1000000000;
+string str;
+string finalStr;
+
+void bfs()
+{
+    queue<int> q;
+
+    q.push(sourceNode);
+
+    while(q.empty() == false)
+    {
+        int top = q.front();
+        q.pop();
+
+        if(top == endNode) break;
+
+        for(int i=0; i<(int)adjList[top].size(); i++)
+        {
+            if(visited[adjList[top][i]] == false && adjMat[top][adjList[top][i]] > 0)
+            {
+                visited[adjList[top][i]] = true;
+                parent[adjList[top][i]] = top;
+                q.push(adjList[top][i]);
+            }
+        }
+    }
+}
+
+int augmentPath(int nowNode, int minTillNow)
+{
+    if(nowNode == sourceNode)
+    {
+        return minTillNow;
+    }
+
+    if(parent[nowNode] != -1)
+    {
+        int ret = augmentPath(parent[nowNode], min(minTillNow, adjMat[parent[nowNode]][nowNode]));
+
+        adjMat[parent[nowNode]][nowNode] -= ret;
+        adjMat[nowNode][parent[nowNode]] += ret;
+
+        return ret;
+    }
+    else
+    {
+        return INF;
+    }
+}
+
+void maxFlow()
+{
+    while(true)
+    {
+        memset(visited, false, sizeof(visited));
+        memset(parent, -1, sizeof(parent));
+
+        bfs();
+
+        int toAdd = augmentPath(endNode, INF);
+
+        if(toAdd == INF) break;
+        else maximum += toAdd;
+    }
+}
+
+void solve(int nowNode)
+{
+    if(nowNode == 27+(int)str.length())
+    {
+        return;
+    }
+
+    for(int i=0; i<(int)adjList[nowNode].size(); i++)
+    {
+        for(int x=0; x<130; x++)
+        {
+            for(int y=0; y<130; y++)
+            {
+                adjMat[x][y] = original[x][y];
+            }
+        }
+
+        int neighbour = adjList[nowNode][i];
+
+        if(neighbour != sourceNode && adjMat[neighbour][endNode] > 0)
+        {
+            adjMat[sourceNode][nowNode] = 0;
+            adjMat[nowNode][neighbour] = 0;
+            adjMat[neighbour][endNode] --;
+
+            maximum = 0;
+            maxFlow();
+
+            int total = 0;
+            for(int pos=0; pos<(int)str.length(); pos++)
+            {
+                if(adjMat[sourceNode][27+pos] == 0)
+                {
+                    total += 1;
+                }
+            }
+
+            if(total == (int)str.length())
+            {
+                finalStr[nowNode-27] = neighbour - 1 + 'a';
+
+                original[sourceNode][nowNode] = 0;
+                original[nowNode][neighbour] = 0;
+                original[neighbour][endNode] --;
+
+                solve(nowNode+1);
+                return;
+            }
+        }
+    }
+}
+
+int main()
+{
+    int testN;
+    int counter[30];
+
+    scanf("%d",&testN);
+
+    for(int tt=0; tt<testN; tt++)
+    {
+        sourceNode = 0;
+        endNode = 127;
+
+        memset(adjMat, 0, sizeof(adjMat));
+        memset(original, 0, sizeof(original));
+        memset(counter, 0, sizeof(counter));
+        adjList.clear();
+        adjList.resize(128);
+
+        cin >> str;
+        for(int i=0; i<(int)str.length(); i++)
+        {
+            counter[str[i]-'a'+1] ++;
+        }
+
+        for(int character=1; character<=26; character++)
+        {
+            if(counter[character] != 0)
+            {
+                adjMat[character][endNode] = counter[character];
+                original[character][endNode] = counter[character];
+
+                adjList[endNode].push_back(character);
+                adjList[character].push_back(endNode);
+            }
+        }
+
+        for(int i=0; i<(int)str.length(); i++)
+        {
+            string temp;
+            cin >> temp;
+
+            sort(temp.begin(), temp.end());
+
+            int first, second;
+            for(int j=0; j<(int)temp.length(); j++)
+            {
+                first = 27 + i;
+                second = temp[j]-'a'+1;
+
+                adjList[first].push_back(second);
+                adjList[second].push_back(first);
+
+                adjMat[first][second] = 1;
+                original[first][second] = 1;
+            }
+
+            first = sourceNode;
+            second = 27+i;
+
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+
+            original[first][second] = 1;
+            adjMat[first][second] = 1;
+        }
+
+        maxFlow();
+        int total = 0;
+        for(int pos=0; pos<(int)str.length(); pos++)
+        {
+            if(adjMat[sourceNode][27+pos] == 0)
+            {
+                total += 1;
+            }
+        }
+        if(total != (int)str.length())
+        {
+            cout << "NO SOLUTION" << endl;
+        }
+        else
+        {
+            finalStr = str;
+            solve(27);
+            cout << finalStr << endl;
+        }
+    }
+
+    return 0;
+}
