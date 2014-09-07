@@ -1,0 +1,145 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+int tilesN;
+vector<vector<int> > adjList;
+int adjMat[300][300];
+int maximum;
+int sourceNode, endNode;
+int parent[300];
+bool visited[300];
+int INF = 1000000000;
+
+void bfs()
+{
+    queue<int> q;
+
+    q.push(sourceNode);
+
+    while(q.empty() == false)
+    {
+        int top = q.front();
+        q.pop();
+
+        if(top == endNode) break;
+
+        for(int i=0; i<(int)adjList[top].size(); i++)
+        {
+            if(visited[adjList[top][i]] == false && adjMat[top][adjList[top][i]] > 0)
+            {
+                visited[adjList[top][i]] = true;
+                parent[adjList[top][i]] = top;
+                q.push(adjList[top][i]);
+            }
+        }
+    }
+}
+
+int augmentPath(int nowNode, int minTillNow)
+{
+    if(nowNode == sourceNode)
+    {
+        return minTillNow;
+    }
+
+    if(parent[nowNode] != -1)
+    {
+        int ret = augmentPath(parent[nowNode], min(minTillNow, adjMat[parent[nowNode]][nowNode]));
+
+        adjMat[parent[nowNode]][nowNode] -= ret;
+        adjMat[nowNode][parent[nowNode]] += ret;
+
+        return ret;
+    }
+    else
+    {
+        return INF;
+    }
+}
+
+void maxFlow()
+{
+    while(true)
+    {
+        memset(visited, false, sizeof(visited));
+        memset(parent, -1, sizeof(parent));
+
+        bfs();
+
+        int toAdd = augmentPath(endNode, INF);
+
+        if(toAdd == INF) break;
+        else maximum += toAdd;
+    }
+}
+
+
+int main()
+{
+    int testN;
+    scanf("%d",&testN);
+    while(testN--)
+    {
+        memset(adjMat, 0, sizeof(adjMat));
+        adjList.clear();
+        adjList.resize(300);
+
+        sourceNode = 0;
+        endNode = 241;
+
+        for(int i=1; i<=120; i++)
+        {
+            int first, second;
+
+            first = sourceNode;
+            second = i;
+
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+            adjMat[first][second] = 1;
+
+            first = i + 120;
+            second = endNode;
+
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+            adjMat[first][second] = 1;
+        }
+
+        scanf("%d",&tilesN);
+        for(int i=0; i<tilesN; i++)
+        {
+            int first, second;
+
+            scanf("%d %d",&first,&second);
+            first = first+1;
+            second = second+1 + 120;
+
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+            adjMat[first][second] = 1;
+        }
+
+        maximum = 0;
+        maxFlow();
+
+        printf("%d\n", maximum);
+    }
+
+
+
+    return 0;
+}
