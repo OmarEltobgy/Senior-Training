@@ -181,7 +181,7 @@ int main()
             string temp;
             cin >> temp;
 
-            sort(temp.begin(), temp.end());
+            sort(temp.begin(), temp.end()); // to sort the order in which each index try the possible characters
 
             int first, second;
             for(int j=0; j<(int)temp.length(); j++)
