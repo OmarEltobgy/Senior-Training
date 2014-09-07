@@ -1,0 +1,154 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+typedef pair<int, int> ii;
+typedef pair<int, ii> iii;
+
+int tilesN;
+vector<vector<int> > adjList;
+int maximum;
+bool visitedThisTime[8010];
+bool coupledBefore[8010];
+int parent[8010];
+int child[8010];
+
+bool findAugmentedPath(int nowNode)
+{
+    if(visitedThisTime[nowNode] == true)
+    {
+        return false;
+    }
+
+    visitedThisTime[nowNode] = true;
+
+    for(int i=0; i<(int)adjList[nowNode].size(); i++)
+    {
+        int next = adjList[nowNode][i];
+        if(coupledBefore[next] == false)
+        {
+            coupledBefore[next] = true;
+            child[nowNode] = next;
+            parent[next] = nowNode;
+            return true;
+        }
+        else
+        {
+            if(findAugmentedPath(parent[next]) == true)
+            {
+                child[nowNode] = next;
+                parent[next] = nowNode;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+int main()
+{
+    int x;
+    while(scanf("%d",&x) != EOF)
+    {
+        adjList.clear();
+        adjList.resize(8010);
+        memset(parent, -1, sizeof(parent));
+        memset(child, -1, sizeof(child));
+        memset(coupledBefore, 0, sizeof(coupledBefore));
+
+        string grid[200];
+        for(int i=0; i<x; i++)
+        {
+            cin >> grid[i];
+        }
+
+        vector<iii> horizontal;
+        vector<iii> vertical;
+        for(int i=0; i<x; i++)
+        {
+            for(int j=0; j<x; j++)
+            {
+                if(grid[i][j] == '.')
+                {
+                    int firstJ = j;
+                    j++;
+                    while(j < x && grid[i][j] == '.')
+                    {
+                        j++;
+                    }
+                    horizontal.push_back(iii(i, ii(firstJ, j-1)));
+                }
+            }
+
+        }
+
+        for(int j=0; j<x; j++)
+        {
+            for(int i=0; i<x; i++)
+            {
+                if(grid[i][j] == '.')
+                {
+                    int firstI = i;
+                    i++;
+                    while(i < x && grid[i][j] == '.')
+                    {
+                        i++;
+                    }
+                    vertical.push_back(iii(j, ii(firstI, i-1)));
+                }
+            }
+        }
+
+        for(int h=0; h<(int)horizontal.size(); h++)
+        {
+            for(int v=0; v<(int)vertical.size(); v++)
+            {
+                iii hor = horizontal[h];
+                iii ver = vertical[v];
+
+                int horRow = hor.first;
+                int horFirstCol = hor.second.first;
+                int horLastCol = hor.second.second;
+
+                int verCol = ver.first;
+                int verFirstRow = ver.second.first;
+                int verLastRow = ver.second.second;
+
+                if(horRow >= verFirstRow && horRow <= verLastRow && verCol >= horFirstCol && verCol <= horLastCol)
+                {
+                    int first = h;
+                    int second = v;
+
+                    adjList[first].push_back(second);
+                }
+            }
+        }
+
+        maximum = 0;
+        for(int i=0; i<(int)horizontal.size(); i++)
+        {
+            memset(visitedThisTime, 0, sizeof(visitedThisTime));
+            if(findAugmentedPath(i) == true)
+            {
+                maximum ++;
+            }
+        }
+
+        printf("%d\n", maximum);
+    }
+
+    return 0;
+}
