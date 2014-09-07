@@ -1,0 +1,149 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+vector<vector<int> > adjList;
+int maximum;
+string str;
+string finalStr;
+
+int child[110]; //for the first set of nodes
+int parent[110]; //for the second set of nodes
+bool coupledBefore[110]; //for the second set of nodes
+bool visitedThisTime[110]; //for the first set of nodes
+
+bool findAugmentedPath(int nowNode)
+{
+    if(visitedThisTime[nowNode] == true)
+    {
+        return false;
+    }
+
+    visitedThisTime[nowNode] = true;
+
+    for(int i=0; i<(int)adjList[nowNode].size(); i++)
+    {
+        int next = adjList[nowNode][i];
+        if(coupledBefore[next] == false)
+        {
+            parent[next] = nowNode;
+            child[nowNode] = next;
+            coupledBefore[next] = true;
+            return true;
+        }
+        else
+        {
+            if(findAugmentedPath(parent[next]) == true)
+            {
+                parent[next] = nowNode;
+                child[nowNode] = next;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+
+
+int main()
+{
+    int testN;
+    scanf("%d",&testN);
+
+    for(int tt=0; tt<testN; tt++)
+    {
+        vector<vector<int> > indices;
+
+        adjList.clear();
+        adjList.resize(110);
+        indices.clear();
+        indices.resize(30);
+        memset(parent, -1, sizeof(parent));
+        memset(child, -1, sizeof(child));
+        memset(coupledBefore, 0, sizeof(coupledBefore));
+
+
+        cin >> str;
+        sort(str.begin(), str.end());
+        for(int i=0; i<(int)str.length(); i++)
+        {
+            indices[str[i]-'a'].push_back(i);
+        }
+
+        for(int i=0; i<(int)str.length(); i++)
+        {
+            string temp;
+            cin >> temp;
+            
+            sort(temp.begin(), temp.end()); // to sort the order in which each index try the possible characters
+
+            int first = i;
+
+            for(int j=0; j<(int)temp.length(); j++)
+            {
+                int secondChar = temp[j]-'a';
+
+                for(int k=0; k<(int)indices[secondChar].size(); k++)
+                {
+                    int second = indices[secondChar][k];
+
+                    adjList[first].push_back(second);
+                }
+            }
+
+        }
+
+        maximum = 0;
+        for(int i=0; i<(int)str.length(); i++)
+        {
+            memset(visitedThisTime, 0, sizeof(visitedThisTime));
+            if(findAugmentedPath(i) == true)
+            {
+                maximum ++;
+            }
+        }
+
+        if(maximum == (int)str.length())
+        {
+            finalStr = "";
+            for(int i=0; i<(int)str.length(); i++)
+            {
+                for(int j=0; j<(int)str.length(); j++) // visit all the nodes which are previous to the nowNode in order not to unmatch them
+                {
+                    if(j < i) visitedThisTime[j] = true;
+                    else      visitedThisTime[j] = false;
+                }
+
+                coupledBefore[child[i]] = false; // uncouple nowNode
+
+                findAugmentedPath(i);
+
+                finalStr += str[child[i]];
+            }
+
+            cout << finalStr << endl;
+        }
+        else
+        {
+            cout << "NO SOLUTION" << endl;
+        }
+
+
+    }
+
+    return 0;
+}
