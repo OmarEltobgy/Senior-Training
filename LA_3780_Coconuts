@@ -1,0 +1,143 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+vector<vector<int> > adjList;
+int adjMat[310][310];
+int maximum;
+int sourceNode, endNode;
+int parent[310];
+int believe[310];
+bool visited[310];
+int INF = 1000000000;
+
+void bfs()
+{
+    queue<int> q;
+
+    q.push(sourceNode);
+
+    while(q.empty() == false)
+    {
+        int top = q.front();
+        q.pop();
+
+        if(top == endNode) break;
+
+        for(int i=0; i<(int)adjList[top].size(); i++)
+        {
+            if(visited[adjList[top][i]] == false && adjMat[top][adjList[top][i]] > 0)
+            {
+                visited[adjList[top][i]] = true;
+                parent[adjList[top][i]] = top;
+                q.push(adjList[top][i]);
+            }
+        }
+    }
+}
+
+int augmentPath(int nowNode, int minTillNow)
+{
+    if(nowNode == sourceNode)
+    {
+        return minTillNow;
+    }
+
+    if(parent[nowNode] != -1)
+    {
+        int ret = augmentPath(parent[nowNode], min(minTillNow, adjMat[parent[nowNode]][nowNode]));
+
+        adjMat[parent[nowNode]][nowNode] -= ret;
+        adjMat[nowNode][parent[nowNode]] += ret;
+
+        return ret;
+    }
+    else
+    {
+        return INF;
+    }
+}
+
+void maxFlow()
+{
+    while(true)
+    {
+        memset(visited, false, sizeof(visited));
+        memset(parent, -1, sizeof(parent));
+
+        bfs();
+
+        int toAdd = augmentPath(endNode, INF);
+
+        if(toAdd == INF) break;
+        else maximum += toAdd;
+    }
+}
+
+int main()
+{
+    int guardsN, pairsN;
+    scanf("%d %d",&guardsN,&pairsN);
+
+    while(guardsN != 0 || pairsN != 0)
+    {
+        memset(adjMat, 0, sizeof(adjMat));
+        adjList.clear();
+        adjList.resize(310);
+
+        sourceNode = 0;
+        endNode = 301;
+
+        for(int i=1; i<=guardsN; i++)
+        {
+            scanf("%d",&believe[i]);
+            if(believe[i] == 1) // believe
+            {
+                adjList[sourceNode].push_back(i);
+                adjList[i].push_back(sourceNode);
+
+                adjMat[sourceNode][i] = 1;
+            }
+            else // not believe
+            {
+                adjList[endNode].push_back(i);
+                adjList[i].push_back(endNode);
+
+                adjMat[i][endNode] = 1;
+            }
+        }
+
+        for(int i=0; i<pairsN; i++)
+        {
+            int first, second;
+            scanf("%d %d",&first,&second);
+
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+            
+            // undirected edge in both directions
+            adjMat[second][first] = 1;
+            adjMat[first][second] = 1;
+        }
+
+        maximum = 0;
+        maxFlow();
+
+        printf("%d\n", maximum);
+
+        scanf("%d %d",&guardsN,&pairsN);
+    }
+
+}
