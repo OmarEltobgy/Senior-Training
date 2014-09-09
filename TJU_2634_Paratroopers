@@ -1,0 +1,171 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+vector<vector<int> > adjList;
+double adjMat[210][210];
+double maximum;
+int sourceNode, endNode;
+int parent[210];
+bool visited[210];
+double INF = 1000000000000;
+double eps = 1e-7;
+
+void bfs()
+{
+    queue<int> q;
+
+    q.push(sourceNode);
+    visited[sourceNode] = true;
+
+    while(q.empty() == false)
+    {
+        int top = q.front();
+        q.pop();
+
+        if(top == endNode) break;
+
+        for(int i=0; i<(int)adjList[top].size(); i++)
+        {
+            int next = adjList[top][i];
+            if(visited[next] == false && adjMat[top][next] > eps)
+            {
+                visited[next] = true;
+                parent[next] = top;
+                q.push(next);
+            }
+        }
+    }
+}
+
+double augmentPath(int nowNode, double minTillNow)
+{
+    if(nowNode == sourceNode)
+    {
+        return minTillNow;
+    }
+
+    if(parent[nowNode] != -1)
+    {
+        double ret = augmentPath(parent[nowNode], min(minTillNow, adjMat[parent[nowNode]][nowNode]));
+
+        adjMat[parent[nowNode]][nowNode] -= ret;
+        adjMat[nowNode][parent[nowNode]] += ret;
+
+        return ret;
+    }
+    else
+    {
+        return INF;
+    }
+}
+
+void maxFlow()
+{
+    while(true)
+    {
+        memset(visited, false, sizeof(visited));
+        memset(parent, -1, sizeof(parent));
+
+        bfs();
+
+        double toAdd = augmentPath(endNode, INF);
+
+        if(fabs(toAdd-INF) < eps) break;
+        else maximum += toAdd;
+    }
+}
+
+int main()
+{
+    int testN;
+    scanf("%d",&testN);
+    while(testN--)
+    {
+        for(int i=0; i<210; i++)
+        {
+            for(int j=0; j<210; j++)
+            {
+                adjMat[i][j] = 0.0;
+                original[i][j] = 0.0;
+            }
+        }
+
+        adjList.clear();
+        adjList.resize(210);
+
+        sourceNode = 0;
+        endNode = 201;
+
+        int x, y, N;
+        double val;
+        int first, second;
+
+        scanf("%d %d %d",&x,&y,&N);
+
+
+        // Max flow gives us the minimum cut or the maximum flow of the sum of edges
+        // to get minimum cut or the maximum flow we get the max flow of the log of the edges weight
+        // as the sum of the log is equal to the product of the weights
+        for(int i=1; i<=x; i++)
+        {
+            cin >> val;
+
+            first = sourceNode;
+            second = i;
+
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+
+            adjMat[first][second] = log(val);
+        }
+
+        for(int i=1; i<=y; i++)
+        {
+            cin >> val;
+
+            first = i + 100;
+            second = endNode;
+
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+
+            adjMat[first][second] = log(val);
+        }
+
+        for(int i=0; i<N; i++)
+        {
+            int first, second;
+
+            scanf("%d %d",&first,&second);
+            first = first;
+            second = second + 100;
+
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+
+            adjMat[first][second] = log(INF); // we don't care about this value
+        }
+
+        maximum = 0;
+        maxFlow();
+
+        printf("%.4lf\n", exp(result));
+    }
+
+
+
+    return 0;
+}
