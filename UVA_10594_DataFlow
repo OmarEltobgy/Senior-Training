@@ -1,0 +1,214 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+typedef pair<long long, int> li;
+
+vector<vector<int> > adjList;
+long long costPerUnitFlow[110][110];
+long long originalCapacity[110][110];
+long long nowCapacity[110][110];
+long long maximum;
+int sourceNode, endNode;
+int parent[110];
+long long dist[110];
+long long INF = 10000000000000000;
+long long neededFlow;
+long long nowCost;
+
+void dijkestra() // this can handle negative weight edges as all the edges we use are still in the queue not updated
+// it can't handle negative weight cycles however this will never happen as we always take the shortest path
+// so the negative edges (backward edges) their absolute values will always be less than the other longer path which is positive
+{
+    priority_queue<li, vector<li>, greater<li> > pq;
+
+    pq.push(li(0, sourceNode));
+    dist[sourceNode] = 0;
+
+    while(pq.empty() == false)
+    {
+        li top = pq.top();
+        long long minDist = top.first;
+        int nowNode = top.second;
+        pq.pop();
+
+        if(dist[nowNode] == minDist)
+        {
+            if(nowNode == endNode)
+            {
+                break;
+            }
+
+            for(int i=0; i<(int)adjList[nowNode].size(); i++)
+            {
+                int nextNode = adjList[nowNode][i];
+
+                long long edgeWeight; // the edge weight might be negative or positive
+
+                if(nowCapacity[nowNode][nextNode] <= originalCapacity[nowNode][nextNode])
+                {
+                    edgeWeight = costPerUnitFlow[nowNode][nextNode];
+                }
+                else // more than the original capacity (backward edge) because of a flow in the other forward edge
+                {
+                    edgeWeight = -1 * costPerUnitFlow[nowNode][nextNode];
+                }
+
+
+                if(minDist+edgeWeight < dist[nextNode] && nowCapacity[nowNode][nextNode] > 0)
+                {
+                    dist[nextNode] = minDist+edgeWeight;
+                    parent[nextNode] = nowNode;
+                    pq.push(li(dist[nextNode], nextNode));
+                }
+            }
+        }
+    }
+}
+
+long long augmentPath(int nowNode, long long minTillNow)
+{
+    if(nowNode == sourceNode)
+    {
+        return minTillNow;
+    }
+
+    if(parent[nowNode] != -1)
+    {
+        long long canUseCapacity;
+        canUseCapacity = nowCapacity[parent[nowNode]][nowNode];
+
+        if( [parent[nowNode]][nowNode] <= originalCapacity[parent[nowNode]][nowNode])
+        {
+            canUseCapacity = nowCapacity[parent[nowNode]][nowNode];
+        }
+        else // nowCapacity is more than the original capacity (backward edge) because of a flow in the other forward edge
+             // we assumed the cost to be negative so we can only take flow unit its capacity return to the original one
+             // this amount is the extra flow because of the flow in the other forward edge
+        {
+            canUseCapacity = nowCapacity[parent[nowNode]][nowNode] - originalCapacity[parent[nowNode]][nowNode];
+        }
+
+        long long minToSend = min(minTillNow, canUseCapacity);
+        minToSend = min(minToSend, neededFlow-maximum); // because if the minimum flow is larger than needed flow
+
+        long long ret = augmentPath(parent[nowNode], minToSend);
+
+        nowCapacity[parent[nowNode]][nowNode] -= ret;
+        nowCapacity[nowNode][parent[nowNode]] += ret;
+
+        return ret;
+    }
+    else
+    {
+        return INF;
+    }
+}
+
+void maxFlow()
+{
+    while(true)
+    {
+        for(int i=0; i<110; i++)
+        {
+            dist[i] = INF;
+        }
+        memset(parent, -1, sizeof(parent));
+
+        dijkestra();
+
+        long long flowToAdd = augmentPath(endNode, INF);
+
+        if(flowToAdd == INF)
+        {
+            break;
+        }
+        else
+        {
+            maximum += flowToAdd;
+            nowCost += flowToAdd * dist[endNode];
+
+            if(maximum == neededFlow)
+            {
+                break;
+            }
+        }
+    }
+}
+
+int main()
+{
+    int nodesN, edgesN;
+    int first, second;
+    long long nodeFlow;
+
+    while(scanf("%d %d",&nodesN,&edgesN) != EOF)
+    {
+        memset(nowCapacity, 0, sizeof(nowCapacity));
+        memset(originalCapacity, 0, sizeof(originalCapacity));
+        memset(costPerUnitFlow, 0, sizeof(costPerUnitFlow)); // all edges with 0 flow we don't care about its cost otherwise edges with non 0 flow we will set its cost
+        adjList.clear();
+        adjList.resize(110);
+
+        sourceNode = 1;
+        endNode = nodesN;
+
+        int f[5010], s[5010];
+        long long c[5010];
+        for(int i=0; i<edgesN; i++)
+        {
+            scanf("%d %d %lld",&f[i],&s[i],&c[i]);
+        }
+
+        scanf("%lld %lld",&neededFlow,&nodeFlow);
+
+        for(int i=0; i<edgesN; i++)
+        {
+            long long cost = c[i];
+
+            first = f[i];
+            second = s[i];
+
+            adjList[first].push_back(second);
+            adjList[second].push_back(first);
+
+            // bidirectional edges
+            costPerUnitFlow[first][second] = cost;
+            costPerUnitFlow[second][first] = cost;
+
+            nowCapacity[first][second] = nodeFlow;
+            nowCapacity[second][first] = nodeFlow;
+
+            originalCapacity[first][second] = nodeFlow;
+            originalCapacity[second][first] = nodeFlow;
+        }
+
+        maximum = 0;
+        nowCost = 0;
+        maxFlow();
+
+        if(maximum < neededFlow)
+        {
+            printf("Impossible.\n");
+        }
+        else
+        {
+            printf("%lld\n", nowCost);
+        }
+
+    }
+
+    return 0;
+}
