@@ -1,0 +1,186 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+
+using namespace std;
+
+int sourceNode, endNode;
+vector<vector<int> > adjList;
+int adjMat[4000][4000];
+bool visited[4000];
+int parent[4000];
+int INF = 1000000000;
+int dx[4] = {0,  0, 1, -1};
+int dy[4] = {1, -1, 0,  0};
+int maximum;
+
+void bfs()
+{
+    queue<int> q;
+
+    q.push(sourceNode);
+
+    while(q.empty() == false)
+    {
+        int top = q.front();
+        q.pop();
+
+        if(top == endNode) break;
+
+        for(int i=0; i<(int)adjList[top].size(); i++)
+        {
+            if(visited[adjList[top][i]] == false && adjMat[top][adjList[top][i]] > 0)
+            {
+                visited[adjList[top][i]] = true;
+                parent[adjList[top][i]] = top;
+                q.push(adjList[top][i]);
+            }
+        }
+    }
+}
+
+int augmentPath(int nowNode, int minTillNow)
+{
+    if(nowNode == sourceNode)
+    {
+        return minTillNow;
+    }
+
+    if(parent[nowNode] != -1)
+    {
+        int ret = augmentPath(parent[nowNode], min(minTillNow, adjMat[parent[nowNode]][nowNode]));
+
+        adjMat[parent[nowNode]][nowNode] -= ret;
+        adjMat[nowNode][parent[nowNode]] += ret;
+
+        return ret;
+    }
+    else
+    {
+        return INF;
+    }
+}
+
+void maxFlow()
+{
+    while(true)
+    {
+        memset(visited, false, sizeof(visited));
+        memset(parent, -1, sizeof(parent));
+
+        bfs();
+
+        int toAdd = augmentPath(endNode, INF);
+
+        if(toAdd == INF) break;
+        else maximum += toAdd;
+    }
+}
+
+int main()
+{
+    string grid[50];
+    int first, second;
+
+    while(getline(cin, grid[0]))
+    {
+        int rowN = 1;
+        getline(cin, grid[rowN]);
+        while(grid[rowN] != "")
+        {
+            rowN++;
+            getline(cin, grid[rowN]);
+        }
+
+        memset(adjMat, 0, sizeof(adjMat));
+        adjList.clear();
+        adjList.resize(4000);
+
+        sourceNode = 3998;
+        endNode = 3999;
+
+        for(int i=0; i<rowN; i++)
+        {
+            for(int j=0; j<(int)grid[i].size(); j++)
+            {
+                if(grid[i][j] == 'W')
+                {
+                    first = sourceNode;
+                    second = i*40 + j;
+
+                    adjList[first].push_back(second);
+                    adjList[second].push_back(first);
+
+                    adjMat[first][second] = 1; // each W we can use only one time
+
+                    for(int k=0; k<4; k++)
+                    {
+                        if(i+dx[k]>=0 && i+dx[k]<rowN && j+dy[k]>=0 && j+dy[k]<(int)grid[i].size()
+                           && grid[i+dx[k]][j+dy[k]] == 'I')
+                        {
+                            first = i*40 + j;
+                            second = (i+dx[k])*40 + (j+dy[k]);
+
+                            adjList[first].push_back(second);
+                            adjList[second].push_back(first);
+
+                            adjMat[first][second] = 1;
+                        }
+                    }
+                }
+                else if(grid[i][j] == 'N')
+                {
+                    first = i*40 + j;
+                    second = endNode;
+
+                    adjList[first].push_back(second);
+                    adjList[second].push_back(first);
+
+                    adjMat[first][second] = 1; // each N we can use only one time
+
+                    for(int k=0; k<4; k++)
+                    {
+                        if(i+dx[k]>=0 && i+dx[k]<rowN && j+dy[k]>=0 && j+dy[k]<(int)grid[i].size()
+                           && grid[i+dx[k]][j+dy[k]] == 'I')
+                        {
+                            first = (i+dx[k] + 41)*40 + (j+dy[k]);
+                            second = i*40 + j;
+
+                            adjList[first].push_back(second);
+                            adjList[second].push_back(first);
+
+                            adjMat[first][second] = 1;
+                        }
+                    }
+                }
+                else if(grid[i][j] == 'I') // we make vertex capacity of capacity 1 in order not to use I twice
+                    // in case of 'W' and 'N' we connect from the source to the sink an edge with capacity 1 so we cant use it more than once
+
+                {
+                    first = i*40 + j;
+                    second = (i+41)*40 + j;
+
+                    adjList[first].push_back(second);
+                    adjList[second].push_back(first);
+
+                    adjMat[first][second] = 1;
+                }
+            }
+        }
+
+        maximum = 0;
+        maxFlow();
+
+        printf("%d\n", maximum);
+    }
+    return 0;
+}
