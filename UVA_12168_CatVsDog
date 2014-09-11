@@ -1,0 +1,162 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+typedef pair<int, int> ii;
+typedef pair<int, ii> iii;
+
+vector<vector<int> > adjList;
+int maximum;
+
+int child[1100]; //for the first set of nodes
+int parent[1100]; //for the second set of nodes
+bool coupledBefore[1100]; //for the second set of nodes
+bool visitedThisTime[1100]; //for the first set of nodes
+
+bool findAugmentedPath(int nowNode)
+{
+    if(visitedThisTime[nowNode] == true)
+    {
+        return false;
+    }
+
+    visitedThisTime[nowNode] = true;
+
+    for(int i=0; i<(int)adjList[nowNode].size(); i++)
+    {
+        int next = adjList[nowNode][i];
+        if(coupledBefore[next] == false)
+        {
+            parent[next] = nowNode;
+            child[nowNode] = next;
+            coupledBefore[next] = true;
+            return true;
+        }
+        else
+        {
+            if(findAugmentedPath(parent[next]) == true)
+            {
+                parent[next] = nowNode;
+                child[nowNode] = next;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+
+
+int main()
+{
+    int testN;
+    scanf("%d",&testN);
+
+    for(int tt=0; tt<testN; tt++)
+    {
+        int catsN, dogsN, votersN;
+        scanf("%d %d %d",&catsN,&dogsN,&votersN);
+
+        vector<iii> voterState; // first integer is 0 for cat Lover and 1 for dog Lover
+        voterState.resize(votersN);
+
+        for(int i=0; i<votersN; i++)
+        {
+            string first, second;
+            string firstN, secondN;
+            int firstNN, secondNN, type;
+
+            cin >> first >> second;
+
+            if(first[0] == 'C')
+            {
+                type = 0;
+            }
+            else // first[0] == 'D'
+            {
+                type = 1;
+            }
+
+            firstN = "";
+            for(int s=1; s<(int)first.length(); s++)
+            {
+                firstN += first[s];
+            }
+
+            secondN = "";
+            for(int s=1; s<(int)second.length(); s++)
+            {
+                secondN += second[s];
+            }
+
+            firstNN = atoi(firstN.c_str());
+            secondNN = atoi(secondN.c_str());
+
+            voterState[i] = iii(type, ii(firstNN, secondNN));
+        }
+
+
+        adjList.clear();
+        adjList.resize(1100);
+        memset(parent, -1, sizeof(parent));
+        memset(child, -1, sizeof(child));
+        memset(coupledBefore, 0, sizeof(coupledBefore));
+
+
+        for(int i=0; i<votersN; i++)
+        {
+            for(int j=i+1; j<votersN; j++)
+            {
+                if(voterState[i].first != voterState[j].first)
+                {
+                    if(voterState[i].second.first == voterState[j].second.second
+                    || voterState[i].second.second == voterState[j].second.first)
+                    {
+                        if(voterState[i].first == 0) // if cat lover connect it to the corresponding dog lover that contradicts with it
+                                               // because one of them loves something the other hates
+                        {
+                            adjList[i].push_back(j); // connect i the cat lover to j the contradicting dog lover
+                        }
+                        else
+                        {
+                            adjList[j].push_back(i); // connect j the cat lover to i the contradicting dog lover
+                        }
+                    }
+                }
+            }
+        }
+
+        // get the maximum matching (minimum vertex cover) then get from it the maximum independent set which is its complement
+
+        // Maximum Independent Set is a set of vertices such that no two nodes is connected with an edge (not dependent on each other)
+        // therefore for each edge it has at least one end point connected to this set
+        // Maximum Independent set is the complement of the minimum vertex cover problem
+        // minimum vertex cover + maximum independent set = number of nodes
+        maximum = 0;
+        for(int i=0; i<votersN; i++)
+        {
+            memset(visitedThisTime, 0, sizeof(visitedThisTime));
+            if(findAugmentedPath(i) == true)
+            {
+                maximum ++;
+            }
+        }
+
+        printf("%d\n", votersN-maximum);
+    }
+
+    return 0;
+}
