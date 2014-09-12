@@ -1,0 +1,134 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+#include <time.h>
+
+using namespace std;
+
+typedef pair<int, bool> ib;
+
+int nodesN;
+vector<vector<int> > adjList;
+map<string, int> names;
+ib dp[300][3];
+
+ib solve(int nowNode, bool parentTaken)
+{
+    if((int)adjList[nowNode].size() == 0)
+    {
+        if(parentTaken == false)
+        {
+            return ib(1, false);
+        }
+        else
+        {
+            return ib(0, false);
+        }
+    }
+
+    if(dp[nowNode][parentTaken].first != -1)
+    {
+        return dp[nowNode][parentTaken];
+    }
+
+    ib take = ib(0, false), leave = ib(0, false);
+
+    // if the parent is not taken for each node we can leave it or take it and take the maximum between them
+    if(parentTaken == false)
+    {
+        take.first = 1;
+        for(int i=0; i<(int)adjList[nowNode].size(); i++)
+        {
+            ib ret = solve(adjList[nowNode][i], true);
+
+            take.first += ret.first;
+            take.second |= ret.second;
+        }
+    }
+
+    // if the parent is taken we only have one choice for each node to leave it
+    for(int i=0; i<(int)adjList[nowNode].size(); i++)
+    {
+        ib ret = solve(adjList[nowNode][i], false);
+
+        leave.first += ret.first;
+        leave.second |= ret.second;
+    }
+
+    if(take.first == leave.first)
+    {
+        return dp[nowNode][parentTaken] = ib(take.first, true);
+    }
+    else
+    {
+        return dp[nowNode][parentTaken] = max(take, leave);
+    }
+}
+
+int main()
+{
+    string employee[300], boss[300];
+    scanf("%d",&nodesN);
+    while(nodesN != 0)
+    {
+        for(int i=0; i<nodesN+1; i++)
+        {
+            dp[i][0] = ib(-1, false);
+            dp[i][1] = ib(-1, false);
+        }
+        adjList.clear();
+        adjList.resize(nodesN+1);
+        names.clear();
+
+        cin >> boss[0];
+        names[boss[0]] = 0;
+
+        for(int i=1; i<nodesN; i++)
+        {
+            cin >> employee[i] >> boss[i];
+            names[employee[i]] = i;
+        }
+
+        for(int i=1; i<nodesN; i++)
+        {
+            //cout << names[boss[i]] << " " << names[employee[i]] << endl;
+            adjList[names[boss[i]]].push_back(names[employee[i]]); // we put an edge between the boss and the employee
+        }
+
+        /*for(int i=0; i<nodesN; i++)
+        {
+            cout << i << ".... ";
+            for(int j=0; j<(int)adjList[i].size(); j++)
+            {
+                cout << adjList[i][j] << " ";
+            }
+            cout << endl;
+        }*/
+
+        ib best = solve(0, false);
+
+        printf("%d ", best.first);
+
+        if(best.second == true) // repetition not unique
+        {
+            printf("No\n");
+        }
+        else
+        {
+            printf("Yes\n");
+        }
+
+        scanf("%d",&nodesN);
+    }
+    return 0;
+}
