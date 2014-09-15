@@ -1,0 +1,133 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+#include <time.h>
+
+using namespace std;
+
+typedef pair<int, int> il;
+typedef pair<int, il> iil;
+
+int ordersN;
+vector<iil> orders;
+int dp[10100];
+
+int solve(int nowOrder)
+{
+    if(nowOrder >= ordersN)
+    {
+        return 0;
+    }
+
+    if(dp[nowOrder] != -1)
+    {
+        return dp[nowOrder];
+    }
+
+    // leave this node
+    int leave = solve(nowOrder+1);
+
+    // binary search to find the first of the next orders that we can take if we took this order
+    int first = nowOrder+1;
+    int last = ordersN;
+    int mid = (first+last)/2;
+    int leastValue = orders[nowOrder].first + orders[nowOrder].second.first;
+
+    while(first <= last)
+    {
+        mid = (first+last)/2;
+
+        if(first == last)
+        {
+            break;
+        }
+
+        if(orders[mid].first >= leastValue)
+        {
+            last = mid;
+        }
+        else //if(orders[mid].first < leastValue)
+        {
+            first = mid + 1;
+        }
+    }
+
+    int take = orders[nowOrder].second.second + solve(mid);
+
+    return dp[nowOrder] = max(take, leave);
+}
+
+int main()
+{
+    int testsN;
+    scanf("%d",&testsN);
+
+    while(testsN--)
+    {
+        scanf("%d",&ordersN);
+
+        orders.clear();
+        orders.resize(ordersN);
+        memset(dp, -1, sizeof(dp));
+
+        for(int i=0; i<ordersN; i++)
+        {
+            int start, duration;
+            int cost;
+            scanf("%d %d %d",&start,&duration,&cost);
+            orders[i] = iil(start, il(duration, cost));
+        }
+
+        sort(orders.begin(), orders.end());
+
+        dp[ordersN] = 0;
+        for(int nowOrder=ordersN-1; nowOrder>=0; nowOrder--)
+        {
+            int take, leave;
+
+            leave = dp[nowOrder+1]; // don't take this order and move to the next order to take the decision
+
+            // binary search to find the first of the next orders that we can take if we took this order
+            int first = nowOrder+1;
+            int last = ordersN;
+            int mid = (first+last)/2;
+            int leastValue = orders[nowOrder].first + orders[nowOrder].second.first;
+            while(first <= last)
+            {
+                mid = (first+last)/2;
+
+                if(first == last)
+                {
+                    break;
+                }
+
+                if(orders[mid].first >= leastValue)
+                {
+                    last = mid;
+                }
+                else //if(orders[mid].first < leastValue)
+                {
+                    first = mid + 1;
+                }
+            }
+
+            take = orders[nowOrder].second.second + dp[mid]; // take this order (add its cost) then move to the next orders that we can take and take the maximum dp value of all of them
+
+            dp[nowOrder] = max(take, leave);
+        }
+
+        printf("%d\n", dp[0]);
+    }
+
+    return 0;
+}
