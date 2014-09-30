@@ -1,0 +1,94 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+int fail[100]; // the longest prefix that is also a proper suffix of the string from 0 to i
+               // also this means that if we fail to match the character i what is the largest number of matched characters
+               // which is smaller than current matched characters to try to add this character to
+               // also it means what is the next largest character that we could match which is smaller than i
+
+// this fail is made for the pattern
+void makeFail(string str)
+{
+    fail[0] = 0; // Base Case for the first character [no matched characters till now if we fail to match character 0]
+
+    for(int i=1; i<(int)str.size(); i++)
+    {
+        int matched = fail[i-1]; // First of all we assume that the matched is the longest prefix
+                                 // of the proper suffix of the string from (0 to i-1)
+                                 // and we try to add to this prefix the value of character i
+                                 // and this is the largest matching that
+        while(matched != 0 && str[i] != str[matched])
+        {
+            matched = fail[matched-1]; // we fail to match i with matched so we try the next largest matched which is
+                                       // smaller than current matched and this value is stored in fail[matched]
+                                       // until we get a successful matching or we reach the empty string (matched == 0)
+        }
+
+        // we can successfully match i with matched so we increase matched by 1
+        // this if condition is important because the previous while loop can be broken if we reach matched == 0 and
+        // in this case we have a case that we can't match the first character so matched will remain 0
+        if(str[i] == str[matched])
+        {
+            matched++;
+        }
+
+        fail[i] = matched;
+    }
+}
+
+int main()
+{
+    int testN;
+    string str;
+    string strstr;
+
+    scanf("%d",&testN);
+
+    for(int tt=0; tt<testN; tt++)
+    {
+        if(tt != 0)
+        {
+            printf("\n");
+        }
+
+        cin >> str;
+
+        makeFail(str);
+
+        int eachRepeatSize = 1000000000;
+        // by this while we get all the prefixes that is also a proper suffixes of all the string
+        int len = fail[str.size()-1];
+        while(len != 0)
+        {
+            int augmentingStringLen = str.size()-len;
+
+            if(str.size() % augmentingStringLen == 0) // one candidate for repeating string
+            {
+                // we want the smallest eachRepeatSize (it is always the first one that's why we use break :))
+                eachRepeatSize = min(eachRepeatSize, augmentingStringLen);
+                break;
+            }
+            len = fail[len-1];
+        }
+
+        // we reached the 0 size which is the empty string and its augmentingStringLen = str.size()
+        eachRepeatSize = min(eachRepeatSize, (int)str.size());
+
+        printf("%d\n", eachRepeatSize);
+    }
+
+    return 0;
+}
