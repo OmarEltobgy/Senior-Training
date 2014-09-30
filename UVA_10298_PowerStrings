@@ -1,0 +1,106 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+int fail[1000100]; // the longest prefix that is also a proper suffix of the string from 0 to i
+               // also this means that if we fail to match the character i what is the largest number of matched characters
+               // which is smaller than current matched characters to try to add this character to
+               // also it means what is the next largest character that we could match which is smaller than i
+
+// this fail is made for the pattern
+void makeFail(string str)
+{
+    fail[0] = 0; // Base Case for the first character [no matched characters till now if we fail to match character 0]
+
+    for(int i=1; i<(int)str.size(); i++)
+    {
+        int matched = fail[i-1]; // First of all we assume that the matched is the longest prefix
+                                 // of the proper suffix of the string from (0 to i-1)
+                                 // and we try to add to this prefix the value of character i
+                                 // and this is the largest matching that
+        while(matched != 0 && str[i] != str[matched])
+        {
+            matched = fail[matched-1]; // we fail to match i with matched so we try the next largest matched which is
+                                       // smaller than current matched and this value is stored in fail[matched]
+                                       // until we get a successful matching or we reach the empty string (matched == 0)
+        }
+
+        // we can successfully match i with matched so we increase matched by 1
+        // this if condition is important because the previous while loop can be broken if we reach matched == 0 and
+        // in this case we have a case that we can't match the first character so matched will remain 0
+        if(str[i] == str[matched])
+        {
+            matched++;
+        }
+
+        fail[i] = matched;
+    }
+}
+
+int match(string str, string pattern)
+{
+    int matched = 0; // at the beginning we didn't match any character yet
+
+    vector<int> endOfMatch; // this is a vector holding all the end indices of all the matches
+                            // also we can get the start of the match = endOfMatch - patter.size() + 1
+
+    for(int i=0; i<(int)str.size(); i++)
+    {
+        while(matched != 0 && str[i] != pattern[matched])
+        {
+            matched = fail[matched-1]; // we fail to match i with matched so we try the next largest matched which is
+                                       // smaller than current matched and this value is stored in fail[matched-1]
+                                       // until we get a successful matching or we reach the empty string (matched == 0)
+        }
+
+        // we can successfully match i with matched so we increase matched by 1
+        // this if condition is important because the previous while loop can be broken if we reach matched == 0 and
+        // in this case we have a case that we can't match the first character so matched will remain 0
+        if(str[i] == pattern[matched])
+        {
+            matched++;
+        }
+
+        if(matched == (int)pattern.size())
+        {
+            endOfMatch.push_back(i);
+
+            matched = fail[matched-1]; // Very Important
+        }
+    }
+
+    return endOfMatch.size();
+}
+
+int main()
+{
+    string str;
+    string strstr;
+
+    while(cin>>str && str!=".")
+    {
+        makeFail(str);
+
+        strstr = str + str;
+
+        int matchesN = match(strstr, str);
+
+        int repeatNumber = matchesN - 1;
+
+        printf("%d\n", repeatNumber);
+    }
+
+    return 0;
+}
