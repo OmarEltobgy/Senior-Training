@@ -1,0 +1,109 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+vector<int> fail;
+
+void makeFail(string str)
+{
+    fail.resize(str.size());
+
+    fail[0] = 0;
+
+    for(int i=1; i<(int)str.size(); i++)
+    {
+        int matched = fail[i-1];
+
+        while(matched != 0 && str[i] != str[matched])
+        {
+            matched = fail[matched-1];
+        }
+
+        if(str[i] == str[matched])
+        {
+            matched++;
+        }
+
+        fail[i] = matched;
+    }
+}
+
+int match(string str, string pattern)
+{
+    int counter = 0;
+
+    int matched = 0;
+
+    for(int i=0; i<(int)str.size(); i++)
+    {
+        while(matched != 0 && str[i] != pattern[matched])
+        {
+            matched = fail[matched-1];
+        }
+
+        if(str[i] == pattern[matched])
+        {
+            matched++;
+        }
+
+        if(matched == (int)pattern.size())
+        {
+            counter++;
+            matched = fail[matched-1];
+        }
+    }
+
+    return counter;
+}
+
+int main()
+{
+    int testN;
+    string str, rev, strstr;
+
+    scanf("%d",&testN);
+
+    while(testN--)
+    {
+        cin >> str;
+
+        rev = "";
+        for(int i=str.size()-1; i>=0; i--)
+        {
+            rev += str[i];
+        }
+
+        strstr = str + str;
+
+        makeFail(rev);
+        int isAlindrome = match(strstr, rev);
+        int isPalindrome = match(str, rev);
+
+        if(isPalindrome == 1 && isAlindrome == 2)
+        {
+            printf("palindrome\n");
+        }
+        else if(isAlindrome > 0)
+        {
+            printf("alindrome\n");
+        }
+        else
+        {
+            printf("simple\n");
+        }
+    }
+
+    return 0;
+}
