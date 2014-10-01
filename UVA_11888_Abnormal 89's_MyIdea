@@ -1,0 +1,153 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+vector<int> makeFail(string str)
+{
+    vector<int> fail;
+
+    fail.resize(str.size());
+
+    fail[0] = 0;
+
+    for(int i=1; i<(int)str.size(); i++)
+    {
+        int matched = fail[i-1];
+
+        while(matched != 0 && str[i] != str[matched])
+        {
+            matched = fail[matched-1];
+        }
+
+        if(str[i] == str[matched])
+        {
+            matched++;
+        }
+
+        fail[i] = matched;
+    }
+
+    return fail;
+}
+
+int match(string str, string pattern, vector<int> fail)
+{
+    int matched = 0;
+
+    for(int i=0; i<(int)str.size(); i++)
+    {
+        while(matched != 0 && str[i] != pattern[matched])
+        {
+            matched = fail[matched-1];
+        }
+
+        if(str[i] == pattern[matched])
+        {
+            matched++;
+        }
+    }
+
+    return matched;
+}
+
+int main()
+{
+    int testN;
+    string str, rev;
+
+    scanf("%d",&testN);
+
+    while(testN--)
+    {
+        cin >> str;
+
+        rev = "";
+        for(int i=str.size()-1; i>=0; i--)
+        {
+            rev += str[i];
+        }
+
+        vector<int> fail_1 = makeFail(str); // pattern = main string
+        vector<int> fail_2 = makeFail(rev); // pattern = reversed string
+
+        int ff = match(rev, str, fail_1); // get the longest prefix palindrome
+        int ss = match(str, rev, fail_2); // get the longest suffix palindrome
+
+        if(ff + ss < (int)str.size()) // not palindrome nor alindrome
+        {
+            cout << "simple" << endl;
+        }
+        else
+        {
+            vector<int> fir;
+            int f = ff;
+            while(f != 0)
+            {
+                fir.push_back(f);
+                f = fail_1[f-1];
+            }
+
+            vector<int> sec;
+            int s = ss;
+            while(s != 0)
+            {
+                sec.push_back(s);
+                s = fail_2[s-1];
+            }
+
+            bool finish = false;
+            for(int firstP=0; firstP<(int)fir.size(); firstP++)
+            {
+                if(finish)
+                {
+                    break;
+                }
+
+                for(int secondP=sec.size()-1; secondP>=0; secondP--)
+                {
+                    if(finish)
+                    {
+                        break;
+                    }
+
+                    if(fir[firstP] + sec[secondP] > (int)str.size())
+                    {
+                        break;
+                    }
+
+                    if(!finish && fir[firstP] + sec[secondP] == (int)str.size())
+                    {
+                        cout << "alindrome" << endl;
+                        finish = true;
+                        break;
+                    }
+                }
+            }
+
+            if(!finish && ff == (int)str.size() && ss == (int)str.size()) // palindrome
+            {
+                cout << "palindrome" << endl;
+                continue;
+            }
+            else if(!finish)
+            {
+                cout << "simple" << endl;
+                continue;
+            }
+        }
+    }
+
+    return 0;
+}
