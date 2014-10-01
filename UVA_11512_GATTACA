@@ -1,0 +1,115 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+vector<int> fail;
+int maximum = -1;
+int counter = 0;
+string maxStr = "";
+
+void makeFail(string str)
+{
+    fail.resize(str.size());
+
+    fail[0] = 0;
+
+    for(int i=1; i<(int)str.size(); i++)
+    {
+        int matched = fail[i-1];
+
+        while(matched != 0 && str[i] != str[matched])
+        {
+            matched = fail[matched-1];
+        }
+
+        if(str[i] == str[matched])
+        {
+            matched++;
+        }
+
+        fail[i] = matched;
+
+        if(matched > maximum)
+        {
+            maximum = matched;
+            counter = 2;
+            maxStr = str.substr(0, matched);
+        }
+        else if(matched != 0 && matched == maximum)
+        {
+            string temp = str.substr(0, matched);
+            if(temp < maxStr)
+            {
+                maxStr = temp;
+                counter = 2;
+            }
+            else if(temp == maxStr)
+            {
+                counter ++;
+            }
+        }
+    }
+}
+
+int main()
+{
+    int testN;
+    string str;
+    scanf("%d",&testN);
+
+    while(testN--)
+    {
+        int resCounter=0, resMaximum=0;
+        string resMaxStr="";
+
+        cin >> str;
+
+        for(int i=0; i<(int)str.size(); i++)
+        {
+            string toSend = str.substr(i);
+
+            maximum = 0;
+            maxStr = "";
+            counter = 0;
+
+            makeFail(toSend);
+
+            if(maximum > resMaximum)
+            {
+                resMaximum = maximum;
+                resCounter = counter;
+                resMaxStr = maxStr;
+            }
+            else if(maximum == resMaximum)
+            {
+                if(maxStr < resMaxStr)
+                {
+                    resMaxStr = maxStr;
+                }
+            }
+        }
+
+        if(resMaximum == 0)
+        {
+            cout << "No repetitions found!" << endl;
+        }
+        else
+        {
+            cout << resMaxStr << " " << resCounter << endl;
+        }
+    }
+
+    return 0;
+}
