@@ -1,0 +1,148 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+vector<int> makeFail(string str)
+{
+    vector<int> fail;
+
+    fail.resize(str.size());
+
+    fail[0] = 0;
+
+    for(int i=1; i<(int)str.size(); i++)
+    {
+        int matched = fail[i-1];
+
+        while(matched != 0 && str[i] != str[matched])
+        {
+            matched = fail[matched-1];
+        }
+
+        if(str[i] == str[matched])
+        {
+            matched++;
+        }
+
+        fail[i] = matched;
+    }
+
+    return fail;
+}
+
+int match(string str, string pattern, vector<int> fail)
+{
+    int counter = 0;
+
+    int matched = 0;
+
+    for(int i=0; i<(int)str.size(); i++)
+    {
+        while(matched != 0 && str[i] != pattern[matched])
+        {
+            matched = fail[matched-1];
+        }
+
+        if(str[i] == pattern[matched])
+        {
+            matched++;
+        }
+
+        if(matched == (int)pattern.size())
+        {
+            counter++;
+            matched = fail[matched-1];
+        }
+    }
+
+    return counter;
+}
+
+int main()
+{
+    string str1, str2;
+
+    cin >> str1 >> str2;
+
+    if(str1.size() < str2.size())
+    {
+        string temp;
+
+        temp = str2;
+        str2 = str1;
+        str1 = temp;
+    }
+    // str1 is the longer
+    vector<int> fail_1 = makeFail(str1);
+    vector<int> fail_2 = makeFail(str2);
+
+    int c = match(str1, str2, fail_2);
+
+    if(c == 0)
+    {
+        cout << "0" << endl;
+    }
+    else
+    {
+        vector<int> f;
+        vector<int> s;
+
+        int firstFail = fail_1[str1.size()-1];
+        while(firstFail != 0)
+        {
+            if(str1.size() % (str1.size()-firstFail) == 0)
+            {
+                f.push_back(str1.size()-firstFail);
+            }
+            firstFail = fail_1[firstFail-1];
+        }
+        f.push_back(str1.size());
+
+        int secondFail = fail_2[str2.size()-1];
+        while(secondFail != 0)
+        {
+            if(str2.size() % (str2.size()-secondFail) == 0)
+            {
+                s.push_back((str2.size()-secondFail));
+            }
+            secondFail = fail_2[secondFail-1];
+        }
+        s.push_back(str2.size());
+
+        int p1=0, p2=0;
+        int res = 0;
+        while(p1 < (int)f.size() && p2 < (int)s.size())
+        {
+            if(f[p1] == s[p2])
+            {
+                res++;
+                p1++;
+                p2++;
+            }
+            else if(f[p1] > s[p2])
+            {
+                p2++;
+            }
+            else //if(f[p1] < s[p2])
+            {
+                p1++;
+            }
+        }
+
+        cout << res << endl;
+    }
+
+    return 0;
+}
