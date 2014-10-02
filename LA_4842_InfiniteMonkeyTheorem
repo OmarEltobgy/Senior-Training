@@ -1,0 +1,122 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <map>
+#include <functional>
+#include <stack>
+#include <math.h>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+int keysN, hitsN;
+char ch[40];
+double cost[40];
+string target;
+vector<int> fail;
+double dp[1010][20];
+
+void makeFail(string str)
+{
+    fail.resize(str.size());
+
+    fail[0] = 0;
+
+    for(int i=1; i<(int)str.size(); i++)
+    {
+        int matched = fail[i-1];
+
+        while(matched != 0 && str[i] != str[matched])
+        {
+            matched = fail[matched-1];
+        }
+
+        if(str[i] == str[matched])
+        {
+            matched ++;
+        }
+
+        fail[i] = matched;
+    }
+}
+
+double solve(int nowIndex, int matched)
+{
+    //dp :3
+    double res = 0.0;
+
+    if(matched == (int)target.size())
+    {
+        return 1.0;
+    }
+
+    if(nowIndex == hitsN)
+    {
+        return 0.0;
+    }
+
+    if(dp[nowIndex][matched] != -1)
+    {
+        return dp[nowIndex][matched];
+    }
+
+    for(int i=0; i<keysN; i++)
+    {
+        int matchedToSend = matched;
+
+        while(matchedToSend != 0 && target[matchedToSend] != ch[i])
+        {
+            matchedToSend = fail[matchedToSend-1];
+        }
+
+        if(target[matchedToSend] == ch[i])
+        {
+            matchedToSend ++;
+        }
+
+        res += (cost[i] * solve(nowIndex+1, matchedToSend));
+    }
+
+    return dp[nowIndex][matched] = res;
+}
+
+int main()
+{
+    scanf("%d %d",&keysN,&hitsN);
+
+    while(keysN != 0 || hitsN != 0)
+    {
+        for(int i=0; i<keysN; i++)
+        {
+            cin >> ch[i];
+            cin >> cost[i];
+        }
+
+        cin >> target;
+
+        makeFail(target);
+
+        for(int i=0; i<hitsN+2; i++)
+        {
+            for(int j=0; j<(int)target.size()+2; j++)
+            {
+                dp[i][j] = -1;
+            }
+        }
+
+        double res = solve(0, 0);
+
+        res = res * 100.0;
+
+        printf("%.02lf%%\n", res);
+
+        scanf("%d %d",&keysN,&hitsN);
+    }
+
+    return 0;
+}
